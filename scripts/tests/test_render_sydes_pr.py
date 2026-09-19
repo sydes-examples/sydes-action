@@ -117,8 +117,7 @@ def test_established_only_shows_no_likely_section():
         accepted_impacts=[{"id": "flow:a", "status": "proven"}],
     )
     out = r.render(result)
-    assert "**Established**" in out
-    assert "Likely, not fully established" not in out
+    assert "(likely, not fully established)" not in out
     assert "PetService.create" in out
 
 
@@ -130,12 +129,14 @@ def test_established_only_shows_no_likely_section():
 def test_established_and_inferred_both_shown_and_distinct():
     result = _load("real_established_and_inferred.json")
     out = r.render(result)
-    assert "**Established**" in out
-    assert "**Likely, not fully established**" in out
-    # The two kinds of evidence must never be visually merged into one list.
-    established_idx = out.index("**Established**")
-    likely_idx = out.index("**Likely, not fully established**")
-    assert established_idx < likely_idx
+    section = out.split("### What it may affect")[1].split("###")[0]
+    # The two kinds of evidence must never be visually merged into one
+    # bullet -- at least one bare (established) bullet and at least one
+    # inline-qualified (likely) bullet, established ones listed first.
+    established_match = re.search(r"^- `[^`]+`$", section, re.MULTILINE)
+    likely_idx = section.index("(likely, not fully established)")
+    assert established_match is not None
+    assert established_match.start() < likely_idx
 
 
 # ---------------------------------------------------------------------------
@@ -151,9 +152,12 @@ def test_not_fully_traced_is_explicit_not_silent():
     # be collapsed into one generic message.
     result = _load("real_unsupported_not_traced.json")
     out = r.render(result)
-    assert "**Established**" not in out
-    assert "Likely, not fully established" in out
-    assert "email verification task processing" in out
+    section = out.split("### What it may affect")[1].split("###")[0]
+    # No bare (established) bullet -- every backtick-wrapped bullet here
+    # must carry the inline "(likely, ...)" qualifier.
+    assert re.search(r"^- `[^`]+`$", section, re.MULTILINE) is None
+    assert "(likely, not fully established)" in section
+    assert "email verification task processing" in section
 
 
 # ---------------------------------------------------------------------------
@@ -170,7 +174,8 @@ def test_many_established_paths_are_truncated_deterministically():
     result = _base_result(affected_flows=flows, accepted_impacts=impacts)
     out = r.render(result)
 
-    shown = out.count("```text")
+    section = out.split("### What it may affect")[1].split("###")[0]
+    shown = len(re.findall(r"^- `[^`]+`$", section, re.MULTILINE))
     assert shown == r._MAX_ESTABLISHED_PATHS
     assert f"…and {10 - r._MAX_ESTABLISHED_PATHS} more established path(s)" in out
     # The comment must stay short even with 10 affected routes.
@@ -197,10 +202,10 @@ def test_many_likely_paths_are_truncated_deterministically():
 def test_no_mapped_tests_says_none_not_zero_confusingly():
     result = _load("real_inferred_only_no_tests.json")
     out = r.render(result)
-    # No named test evidence and no aggregate signal either -- the whole
-    # "Existing evidence" section is correctly omitted rather than shown
-    # with a hollow "None identified" line.
-    assert "### Existing evidence" not in out
+    # No named test evidence and no aggregate signal either -- the named-
+    # evidence block within Test evidence is correctly omitted rather than
+    # shown with a hollow "None identified" line.
+    assert "None identified" not in out
 
 
 # ---------------------------------------------------------------------------
@@ -232,7 +237,7 @@ def test_supporting_evidence_is_shown_instead_of_none_identified():
         },
     )
     out = r.render(result)
-    section = out.split("### Existing evidence")[1].split("###")[0]
+    section = out.split("### Test evidence")[1].split("###")[0]
     assert "None identified" not in section
     assert "5" in section
     assert "none directly verify" in section
@@ -259,7 +264,7 @@ def test_verifying_tests_shown_as_the_primary_count():
         },
     )
     out = r.render(result)
-    section = out.split("### Existing evidence")[1].split("###")[0]
+    section = out.split("### Test evidence")[1].split("###")[0]
     assert "2 directly verify the changed behavior" in section
     # Real verifying evidence found -- the before-merge nudge must not fire.
     assert "- Add or run a test covering the affected behavior before merging." not in out
@@ -281,7 +286,7 @@ def test_tests_identified_not_executed_reads_as_intentional():
         "**Tests executed by Sydes:** No — test execution is disabled in this workflow (`--no-run-tests`)."
         in out
     )
-    execution_section = out.split("### Execution")[1].split("###")[0]
+    execution_section = out.split("### Test evidence")[1].split("###")[0]
     assert "fail" not in execution_section.lower()
     assert "error" not in execution_section.lower()
 
@@ -485,12 +490,18 @@ def test_system_impact_row_names_a_single_route_concretely():
         accepted_impacts=[{"id": "flow:a", "status": "proven"}],
     )
     out = r.render(result)
-    assert "| API | `POST /pets` impact established |" in out
+    section = out.split("### What it may affect")[1].split("###")[0]
+    assert "- `POST /pets → PetController.create → PetService.create`" in section
     # The old count-only phrasing must never appear.
     assert "1 established" not in out
 
 
 def test_system_impact_row_collapses_many_routes_to_a_route_count():
+    """The former "Area | Sydes found" table's route-count collapse text
+    is gone (folded away with the table itself), but the same cardinality
+    fact -- 10 routes, only a few shown -- is still conveyed via the
+    established-path truncation note (see
+    `test_many_established_paths_are_truncated_deterministically`)."""
     flows = [
         _make_flow(f"flow:{i}", f"GET /resource/{i}", f"Handler{i}.get", f"Service{i}.fetch")
         for i in range(10)
@@ -498,7 +509,7 @@ def test_system_impact_row_collapses_many_routes_to_a_route_count():
     impacts = [{"id": f"flow:{i}", "status": "proven"} for i in range(10)]
     result = _base_result(affected_flows=flows, accepted_impacts=impacts)
     out = r.render(result)
-    assert "| API | 10 API routes affected (established) |" in out
+    assert f"…and {10 - r._MAX_ESTABLISHED_PATHS} more established path(s)" in out
 
 
 # ---------------------------------------------------------------------------
@@ -533,7 +544,10 @@ def test_wider_api_surface_shown_for_boundary_beyond_traced_route():
         ],
     )
     out = r.render(result)
-    assert "| Wider API surface | JWT authentication filter validates tokens including grace period logic (likely, not fully established) |" in out
+    assert (
+        "- Wider API surface: JWT authentication filter validates tokens including grace "
+        "period logic (likely, not fully established)"
+    ) in out
     assert "Verify the changed behavior on the wider API surface before merging." in out
 
 
@@ -683,7 +697,7 @@ def test_unattached_evidence_is_named_and_suppresses_add_a_test():
         },
     )
     out = r.render(result)
-    section = out.split("### Existing evidence")[1].split("###")[0]
+    section = out.split("### Test evidence")[1].split("###")[0]
     assert "does not allow duplicate parameter names when creating a strategy" in section
     assert "does not allow duplicate parameter names when updating a strategy" in section
     assert "changed symbol `strategySchema`" in section
@@ -695,7 +709,7 @@ def test_unattached_evidence_is_named_and_suppresses_add_a_test():
 def test_before_merge_omitted_when_no_impact_was_found_at_all():
     result = _base_result()  # no flows, no boundaries, no impacts -- true zero signal
     out = r.render(result)
-    assert "### Before merge" not in out
+    assert "### What is still unknown" not in out
 
 
 # ---------------------------------------------------------------------------
@@ -843,14 +857,14 @@ def test_unrelated_handler_does_appear_when_flow_local_evidence_actually_connect
         accepted_impacts=[{"id": "flow:POST:/tokens/renew_access", "status": "proven"}],
     )
     out = r.render(result)
-    assert "  → Server.loginUser" in out
+    assert "→ Server.loginUser" in out
 
 
 def test_zero_mapped_tests_never_renders_a_positive_aggregate_count():
     """A stricter form of `test_no_mapped_tests_says_none_not_zero_confusingly`:
     when every test-count field the summary carries is genuinely zero, no
     digit greater than zero for a test count may appear anywhere in the
-    Existing evidence / Execution sections -- not just that the section is
+    Test evidence section -- not just that the named-evidence block is
     omitted, but that no positive count can leak in from elsewhere."""
     result = _base_result(
         affected_flows=[_make_flow("flow:a", "POST /login", "AuthController.login", "AuthService.login")],
@@ -869,7 +883,7 @@ def test_zero_mapped_tests_never_renders_a_positive_aggregate_count():
         },
     )
     out = r.render(result)
-    assert "### Existing evidence" not in out
+    assert "None identified" not in out
     assert "**Tests executed by Sydes:** No." in out
     assert "Yes —" not in out
 
@@ -957,7 +971,7 @@ def test_multiple_connected_calls_are_not_chained_as_a_sequence():
 
     # The true, established hop still renders as a connected arrow chain.
     assert "GET /api/articles/feed" in out
-    assert "  → feed_articles" in out
+    assert "→ feed_articles" in out
     # Both proven calls must still be visible ...
     assert "add_comment" in out
     assert "create_article" in out
@@ -999,12 +1013,11 @@ def test_global_changed_nodes_not_auto_rendered_under_every_unrelated_flow():
     out = r.render(result)
 
     # Split each flow's block out and check the other flow's proven call
-    # never leaks into it. Search from "**Established**" onward -- the
-    # route label also appears earlier, in the Area summary table.
-    established = out[out.index("**Established**"):]
-    comments_idx = established.index("POST /comments")
-    users_idx = established.index("PUT /users")
-    out = established
+    # never leaks into it.
+    section = out.split("### What it may affect")[1].split("###")[0]
+    comments_idx = section.index("POST /comments")
+    users_idx = section.index("PUT /users")
+    out = section
     comments_block = out[comments_idx:users_idx] if comments_idx < users_idx else out[comments_idx:]
     users_block = out[users_idx:comments_idx] if users_idx < comments_idx else out[users_idx:]
     assert "add_comment" in comments_block
@@ -1022,7 +1035,7 @@ def test_single_connected_call_still_reads_as_one_established_hop():
         accepted_impacts=[{"id": "flow:a", "status": "proven"}],
     )
     out = r.render(result)
-    assert "  → PetService.create" in out
+    assert "→ PetService.create" in out
     assert "also touches" not in out
     assert "handler also calls" not in out
 
@@ -1090,9 +1103,10 @@ def test_flow_without_matching_impact_falls_back_to_its_own_status_not_proven():
         accepted_impacts=[],  # deliberately no matching entry at all
     )
     out = r.render(result)
-    assert "**Established**" not in out
-    assert "Likely, not fully established" in out
-    assert "PetController.create" in out
+    section = out.split("### What it may affect")[1].split("###")[0]
+    assert re.search(r"^- `[^`]+`$", section, re.MULTILINE) is None
+    assert "(likely, not fully established)" in section
+    assert "PetController.create" in section
 
 
 def test_flow_without_matching_impact_defaults_proven_only_when_flow_itself_says_so():
@@ -1113,7 +1127,9 @@ def test_flow_without_matching_impact_defaults_proven_only_when_flow_itself_says
         accepted_impacts=[],
     )
     out = r.render(result)
-    assert "**Established**" in out
+    section = out.split("### What it may affect")[1].split("###")[0]
+    assert re.search(r"^- `[^`]+`$", section, re.MULTILINE) is not None
+    assert "(likely, not fully established)" not in section
 
 
 # ---------------------------------------------------------------------------
@@ -1150,7 +1166,7 @@ def test_existing_evidence_names_the_real_test_with_tier_and_execution():
         },
     )
     out = r.render(result)
-    section = out.split("### Existing evidence")[1].split("###")[0]
+    section = out.split("### Test evidence")[1].split("###")[0]
     assert "`ArticleApiTest.java::should_update_article_content_success`" in section
     assert "Directly covers: PUT /articles/{slug}" in section
     assert "Execution: not run by Sydes" in section
@@ -1159,10 +1175,11 @@ def test_existing_evidence_names_the_real_test_with_tier_and_execution():
 def test_execution_section_states_explicitly_whether_sydes_ran_tests():
     result = _base_result(notes=["test_execution=skipped reason=--no-run-tests"])
     out = r.render(result)
+    section = out.split("### Test evidence")[1].split("###")[0]
     assert (
-        "### Execution\n\n**Tests executed by Sydes:** No — test execution is disabled in this "
+        "**Tests executed by Sydes:** No — test execution is disabled in this "
         "workflow (`--no-run-tests`)."
-    ) in out
+    ) in section
 
 
 def test_execution_section_reports_a_real_run_count():
@@ -1196,7 +1213,7 @@ def test_still_unverified_distinguishes_no_test_found_from_test_not_executed():
         accepted_impacts=[{"id": "flow:a", "status": "proven"}],
     )
     out = r.render(result)
-    section = out.split("### Still unverified")[1].split("###")[0]
+    section = out.split("### What is still unknown")[1].split("###")[0]
     assert "**API behavior:** a relevant test was found — run it in your own environment to confirm" in section
     assert "**Validation behavior:** no relevant test found" in section
 
@@ -1218,7 +1235,7 @@ def test_still_unverified_reports_a_genuine_failure_distinctly():
         accepted_impacts=[{"id": "flow:a", "status": "proven"}],
     )
     out = r.render(result)
-    section = out.split("### Still unverified")[1].split("###")[0]
+    section = out.split("### What is still unknown")[1].split("###")[0]
     assert "verification FAILED — `should_login` failed in the repository test suite" in section
 
 
@@ -1238,9 +1255,11 @@ def test_verified_category_shown_separately_from_still_unverified():
         accepted_impacts=[{"id": "flow:a", "status": "proven"}],
     )
     out = r.render(result)
-    assert "### Verified" in out
-    assert "- API behavior" in out
-    assert "### Still unverified" not in out
+    section = out.split("### Test evidence")[1].split("###")[0]
+    assert "- API behavior" in section
+    # The passed category itself must never also appear as an unverified
+    # bullet (bold, with a reason) anywhere in the comment.
+    assert "**API behavior:**" not in out
 
 
 def test_notable_observations_surface_pr_semantic_local_risks_not_as_findings():
@@ -1288,7 +1307,7 @@ def test_coverage_limits_surfaces_the_unresolved_route_prefix_diagnostic():
         ],
     )
     out = r.render(result)
-    section = out.split("### Coverage limits")[1].split("###")[0] if "### Coverage limits" in out else ""
+    section = out.split("### What is still unknown")[1].split("###")[0] if "### What is still unknown" in out else ""
     assert "Tests reference `/api/v1/auth/me`, which may be `/v1/auth/me`" in section
 
 
@@ -1358,8 +1377,11 @@ def test_change_analysis_all_green_when_change_is_fully_established_and_verified
         ],
     )
     out = r.render(result)
-    section = out.split("### Change analysis")[1].split("###")[0]
-    assert section.count("✅") == 4
+    section = out.split("### Test evidence")[1].split("###")[0]
+    # Two compact state lines now, not four -- "changed behavior identified"
+    # and "path established" are answered implicitly by Change/What it may
+    # affect having content, rather than repeated here.
+    assert section.count("✅") == 2
     assert "❌" not in section
     assert "○" not in section
 
@@ -1379,7 +1401,7 @@ def test_change_analysis_shows_handoff_icon_when_test_found_but_not_executed():
         ],
     )
     out = r.render(result)
-    section = out.split("### Change analysis")[1].split("###")[0]
+    section = out.split("### Test evidence")[1].split("###")[0]
     assert "✅ Relevant regression test found" in section
     assert "🟡 Verification pending test execution" in section
 
@@ -1387,16 +1409,17 @@ def test_change_analysis_shows_handoff_icon_when_test_found_but_not_executed():
 def test_change_analysis_all_red_when_nothing_is_established():
     result = _base_result()
     out = r.render(result)
-    section = out.split("### Change analysis")[1].split("###")[0]
-    assert section.count("❌") == 4
+    section = out.split("### Test evidence")[1].split("###")[0]
+    # Two compact state lines now, not four -- see the green-case test above.
+    assert section.count("❌") == 2
 
 
 def test_verification_separates_this_change_from_the_surrounding_route():
     """The core reframing: a route whose changed-behavior obligation is
-    unverified must show that under "Still unverified" (about THIS
-    change), while a completely unrelated, pre-existing obligation on the
-    same route shows separately, under softer, non-alarming language --
-    never merged into one undifferentiated list."""
+    unverified must show as a plain bullet (about THIS change), while a
+    completely unrelated, pre-existing obligation on the same route is
+    tagged inline "(pre-existing on this route)" -- never merged into one
+    undifferentiated, indistinguishable list."""
     result = _base_result(
         accepted_impacts=[{"id": "flow:x", "status": "proven"}],
         affected_flows=[
@@ -1413,15 +1436,13 @@ def test_verification_separates_this_change_from_the_surrounding_route():
         ],
     )
     out = r.render(result)
-    assert "### Still unverified" in out
-    this_change_section = out.split("### Still unverified")[1].split("###")[0]
-    assert "**Validation behavior:**" in this_change_section
-    assert "Event emission" not in this_change_section
-
-    assert "### Also on this route (pre-existing)" in out
-    route_section = out.split("### Also on this route (pre-existing)")[1].split("###")[0]
-    assert "**Event emission:**" in route_section
-    assert "not a reason this PR is unhealthy" in route_section
+    assert "### What is still unknown" in out
+    section = out.split("### What is still unknown")[1].split("###")[0]
+    assert "**Validation behavior:**" in section
+    # The this-change bullet must never carry the pre-existing tag...
+    assert "**Validation behavior (pre-existing on this route):**" not in section
+    # ...while the unrelated, pre-existing one must.
+    assert "**Event emission (pre-existing on this route):**" in section
 
 
 def test_verification_falls_back_to_one_section_when_introduced_by_change_is_unpopulated():
@@ -1441,8 +1462,9 @@ def test_verification_falls_back_to_one_section_when_introduced_by_change_is_unp
         ],
     )
     out = r.render(result)
-    assert "### Still unverified" in out
-    assert "### Also on this route (pre-existing)" not in out
+    section = out.split("### What is still unknown")[1].split("###")[0]
+    assert "**Validation behavior:**" in section
+    assert "(pre-existing on this route)" not in section
 
 
 def test_executed_test_count_falls_back_to_obligation_executions():
@@ -1487,6 +1509,6 @@ def test_change_analysis_falls_back_to_status_when_mapped_tests_is_trimmed_from_
         ],
     )
     out = r.render(result)
-    section = out.split("### Change analysis")[1].split("###")[0]
+    section = out.split("### Test evidence")[1].split("###")[0]
     assert "✅ Relevant regression test found" in section
     assert "🟡 Verification pending test execution" in section

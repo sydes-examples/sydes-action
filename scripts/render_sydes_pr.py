@@ -7,15 +7,25 @@ summary.
 
 DESIGN INTENT (read this before changing section order or wording):
 
-The PR comment is a decision surface, not a metrics dump. It answers, in the
-order a reviewer actually needs them: what changed, what system behavior it
-reaches and through what logical path, how far Sydes could establish that
-propagation, what's still unverified, and what (if anything) to check before
-merging. Deep evidence -- full obligation lists, confidence scores, graph
+The PR comment is a decision surface, not a metrics dump. It answers, in five
+scannable sections, the questions a reviewer actually has in order: what
+changed (### Change), what system behavior it reaches and through what
+logical path (### What it may affect), what test evidence exists and whether
+it's been executed (### Test evidence), what gaps remain -- about this change
+or pre-existing on the same route -- plus any before-merge/coverage caveats
+(### What is still unknown), and what an AI review pass found (### Code
+review). Deep evidence -- full obligation lists, confidence scores, graph
 diagnostics, the complete symbol table -- belongs in the uploaded JSON
 artifact and (eventually) a dashboard, not here. A tiny, deliberately sparse
 <details> block carries a few grounding facts; it is not a second render of
 the whole result.
+
+Confidence is never flattened away by this consolidation: an established
+fact is a plain bullet; anything inferred or not fully established keeps an
+explicit inline qualifier (e.g. "(likely, not fully established)"), and a
+pre-existing, unrelated route-level gap keeps "(pre-existing on this
+route)" rather than being merged indistinguishably with a gap in the change
+itself.
 
 Canonical Sydes vocabulary (`VERIFICATION INCOMPLETE`, `obligation`,
 `proven`/`inferred`, `unresolved`) is preserved everywhere in the underlying
@@ -54,7 +64,7 @@ MARKER = "<!-- sydes-verification-comment -->"
 #: executed evidence") previously read as "More verification needed" --
 #: which sounds like Sydes is asking the reviewer for more work, when what
 #: it actually means is "analysis finished, here's exactly what's left and
-#: why" (see `render_change_analysis`/`render_verification`, which now
+#: why" (see `render_test_evidence`/`render_what_is_still_unknown`, which
 #: separate what's about THIS change from what's about the surrounding,
 #: possibly pre-existing route). Reserve alarming language for a genuine
 #: blocking signal: a failed test, a blocking review finding, or an
@@ -83,7 +93,7 @@ _AREA_BY_BOUNDARY_KIND = {
 }
 
 #: Verification is reported per high-level category, never per raw obligation
-#: statement (see `render_verification`) -- these are the only categories
+#: statement (see `render_what_is_still_unknown`) -- these are the only categories
 #: shown, in this fixed display order. `side_effect` has no entry: it is
 #: excluded everywhere obligations are read (see
 #: `_CODE_FRAGMENT_OBLIGATION_KINDS`).
@@ -124,7 +134,6 @@ _MAX_ESTABLISHED_PATHS = 3
 _MAX_LIKELY_PATHS = 2
 _MAX_AREA_ROWS = 6
 _MAX_CHECKLIST_ROWS = 4
-_MAX_BEFORE_MERGE = 3
 _MAX_DETAIL_SYMBOLS = 5
 
 
@@ -225,7 +234,7 @@ def render_change(result: dict[str, Any], lines: list[str]) -> None:
     summary = _clean(_get(result, "pr_semantic_analysis", "change_summary", default=""), limit=600)
     if not summary:
         return
-    lines.append("### What changed")
+    lines.append("### Change")
     lines.append("")
     lines.append(summary)
     lines.append("")
@@ -626,23 +635,50 @@ def select_representative_paths(
     )
 
 
-def render_system_impact(result: dict[str, Any], lines: list[str]) -> None:
+def _format_established_bullet(parts: list[str], connected_calls: list[str], omitted: int) -> str:
+    """One flat bullet line for an established path: a backtick-wrapped
+    route -> handler chain, then -- when this flow's own evidence
+    establishes it -- the symbol(s) the handler actually calls. A single
+    connected call reads as one more arrow hop inside the same code span
+    (the routine case); more than one is called out as plain trailing text
+    in explicit set notation (`{A, B}`), never chained with another arrow,
+    since the handler is proven to call each of these but never proven to
+    call them in any particular order -- an arrow there would fabricate a
+    sequence that was never traced. See the (now-removed) fenced-block
+    rendering this replaces for the original reasoning; the underlying
+    distinction is unchanged, just flattened to one line."""
+    chain = " → ".join(parts)
+    suffix = ""
+    if len(connected_calls) == 1:
+        chain += f" → {connected_calls[0]}"
+    elif connected_calls:
+        suffix += f" (handler also calls: {{{', '.join(connected_calls)}}})"
+    if omitted:
+        suffix += f" (+{omitted} more traced call(s))"
+    return f"`{chain}`{suffix}"
+
+
+def render_what_it_may_affect(result: dict[str, Any], lines: list[str]) -> None:
     """The section a reviewer actually needs: what area of the system this
-    reaches, and through what logical path -- not aggregate counts."""
-    lines.append("### Affected paths")
+    reaches, and through what logical path -- as one flat, scannable bullet
+    list rather than a table plus separate established/likely blocks.
+
+    Confidence is never flattened away: an established item is a plain
+    bullet; anything not fully established keeps an explicit inline
+    qualifier ("(likely, not fully established)") rather than reading with
+    the same confidence as a proven path."""
+    lines.append("### What it may affect")
     lines.append("")
 
-    area_rows = summarize_system_impact_areas(result)
-    if area_rows:
-        lines.append("| Area | Sydes found |")
-        lines.append("| --- | --- |")
-        for area, impact in area_rows:
-            lines.append(f"| {area} | {impact} |")
-        lines.append("")
-
     established, likely, established_more, likely_more = select_representative_paths(result)
+    # Non-API area rows (Service logic, Background jobs, External
+    # integration, Other, Wider API surface) carry genuinely additional
+    # information beyond the routes already shown via paths below. The API
+    # row itself just restates those same routes, so it's skipped here to
+    # avoid showing the same route twice under two different bullets.
+    other_area_bullets = [f"{area}: {impact}" for area, impact in summarize_system_impact_areas(result) if area != "API"]
 
-    if not established and not likely:
+    if not established and not likely and not other_area_bullets:
         # Nothing resolved at all -- this must never read as "nothing is
         # affected". Say plainly that tracing did not reach anything, and
         # cite the real reason when one is available.
@@ -656,54 +692,20 @@ def render_system_impact(result: dict[str, Any], lines: list[str]) -> None:
         lines.append("")
         return
 
-    if established:
-        lines.append("**Established**")
-        lines.append("")
-        for idx, (parts, connected_calls, omitted_calls) in enumerate(established):
-            if len(parts) > 1 or connected_calls:
-                lines.append("```text")
-                lines.append(parts[0])
-                for p in parts[1:]:
-                    lines.append(f"  → {p}")
-                if len(connected_calls) == 1:
-                    # Exactly one proven call out of the handler reads, as
-                    # one more hop past it -- the routine case this
-                    # section's whole design assumes (route -> handler ->
-                    # the one thing it calls).
-                    lines.append(f"  → {connected_calls[0]}")
-                elif connected_calls:
-                    # More than one: the handler is proven to call each of
-                    # these, but not proven to call them in this order (or
-                    # any particular order) -- set notation (`{A, B}`),
-                    # never another `→`, so this never implies a sequence
-                    # route -> handler -> A -> B that was never traced.
-                    # Unlike the old rendering, everything in this set is
-                    # itself route-specific, structurally-followed evidence
-                    # (see `_flow_connected_calls`) -- never a whole-diff
-                    # changed-symbol dump.
-                    joined = ", ".join(connected_calls)
-                    lines.append(f"  handler also calls: {{{joined}}}")
-                if omitted_calls:
-                    lines.append(f"  … +{omitted_calls} more traced call(s)")
-                lines.append("```")
-                if idx < len(established) - 1:
-                    lines.append("")  # blank line between fences -- otherwise
-                                       # adjacent ```text blocks can render as
-                                       # one merged block
-            else:
-                lines.append(f"- `{parts[0]}`")
-        if established_more:
-            lines.append(f"_…and {established_more} more established path(s) in the full result._")
-        lines.append("")
+    for parts, connected_calls, omitted in established:
+        lines.append(f"- {_format_established_bullet(parts, connected_calls, omitted)}")
+    if established_more:
+        lines.append(f"_…and {established_more} more established path(s) in the full result._")
 
-    if likely:
-        lines.append("**Likely, not fully established**")
-        lines.append("")
-        for label in likely:
-            lines.append(f"- {label}")
-        if likely_more:
-            lines.append(f"_…and {likely_more} more likely impact(s) in the full result._")
-        lines.append("")
+    for label in likely:
+        lines.append(f"- `{label}` (likely, not fully established)")
+    if likely_more:
+        lines.append(f"_…and {likely_more} more likely impact(s) in the full result._")
+
+    for bullet in other_area_bullets:
+        lines.append(f"- {bullet}")
+
+    lines.append("")
 
 
 # ---------------------------------------------------------------------------
@@ -803,24 +805,23 @@ def _obligation_has_mapped_test(obligation: dict[str, Any]) -> bool:
     return "no-run-tests" in reason or "was not executed" in reason
 
 
-def render_change_analysis(result: dict[str, Any], lines: list[str]) -> None:
-    changed_symbols = _as_list(_get(result, "change", "symbols", default=[]))
-    flows = _as_list(_get(result, "affected_flows", default=[]))
-    impacts = _as_list(_get(result, "accepted_impacts", default=[]))
-    has_established_path = bool(flows) or any(
-        str(_get(impact, "status", default="")) == "proven" for impact in impacts
-    )
-
+def render_test_evidence(result: dict[str, Any], lines: list[str]) -> None:
+    """Compact state lines first (is a test found; is the behavior verified),
+    then the named evidence and execution detail that used to live in their
+    own "Existing evidence"/"Execution" sections -- same underlying data,
+    folded into one section since it's all "test evidence" a reviewer reads
+    together. The two dropped checklist lines ("Changed behavior
+    identified"/"Affected API/system path established") are still answered,
+    just implicitly, by Change/What it may affect having content above."""
     about_this_change, about_the_route = _obligations_split_by_relevance(result)
-    # Same fallback `render_verification` already uses: when
-    # `introduced_by_change` is unpopulated everywhere (a known data gap on
-    # some analysis paths, not "nothing here relates to the change"),
-    # `about_this_change` is empty -- checking only that set would falsely
-    # read as "no relevant test found" even when `about_the_route` (really
-    # just "every real obligation" in this case) plainly has one. Never
-    # apply this fallback when `about_this_change` genuinely has entries
-    # that just don't happen to pass yet -- that IS a real answer, not a
-    # data gap.
+    # Same fallback used throughout: when `introduced_by_change` is
+    # unpopulated everywhere (a known data gap on some analysis paths, not
+    # "nothing here relates to the change"), `about_this_change` is empty --
+    # checking only that set would falsely read as "no relevant test found"
+    # even when `about_the_route` (really just "every real obligation" in
+    # this case) plainly has one. Never apply this fallback when
+    # `about_this_change` genuinely has entries that just don't happen to
+    # pass yet -- that IS a real answer, not a data gap.
     relevant = about_this_change if about_this_change else about_the_route
     has_mapped_test = any(_obligation_has_mapped_test(o) for o in relevant)
     has_failure = any(str(_get(o, "status", default="")) == "failed" for o in relevant)
@@ -829,26 +830,70 @@ def render_change_analysis(result: dict[str, Any], lines: list[str]) -> None:
     )
 
     if all_verified:
-        verified_line = "✅ Changed behavior verified"
+        state_line = "✅ Changed behavior verified"
     elif has_failure:
-        verified_line = "❌ Changed behavior verified"
+        state_line = "❌ Changed behavior verified"
     elif has_mapped_test:
         # Found, not (yet) executed/confirmed -- a handoff, never a dead
-        # end. See `render_execution`/`_unverified_reason_phrase` for the
-        # same "run it yourself" framing applied to the detailed reason.
-        # Distinct wording, not just an icon: "Changed behavior verified"
-        # paired with a neutral/failure icon reads as a positive claim the
-        # icon then undercuts.
-        verified_line = "🟡 Verification pending test execution"
+        # end. See `_unverified_reason_phrase` for the same "run it
+        # yourself" framing applied to the detailed reason. Distinct
+        # wording, not just an icon: "Changed behavior verified" paired
+        # with a neutral/failure icon reads as a positive claim the icon
+        # then undercuts.
+        state_line = "🟡 Verification pending test execution"
     else:
-        verified_line = "❌ Changed behavior verified"
+        state_line = "❌ Changed behavior verified"
 
-    lines.append("### Change analysis")
+    lines.append("### Test evidence")
     lines.append("")
-    lines.append(("✅" if changed_symbols else "❌") + " Changed behavior identified")
-    lines.append(("✅" if has_established_path else "❌") + " Affected API/system path established")
     lines.append(("✅" if has_mapped_test else "❌") + " Relevant regression test found")
-    lines.append(verified_line)
+    lines.append(state_line)
+    lines.append("")
+
+    # Per-category verified breakdown -- folded in from what used to be its
+    # own "### Verified" section. Only the categories behind the state line
+    # above (`relevant`); a passed category on the surrounding, pre-existing
+    # route is not separately broken out here (see `render_what_is_still_
+    # unknown` for how its GAPS are still surfaced, tagged inline).
+    verified_categories, _unverified_here = _categorize_obligations(relevant)
+    if verified_categories:
+        for label in verified_categories:
+            lines.append(f"- {label}")
+        lines.append("")
+
+    counts = _get(result, "summary", "counts", default={})
+    tests_summary = _relevant_tests_row(counts)
+    entries = _named_test_entries(result)
+    if entries or tests_summary != "None identified":
+        lines.append(tests_summary)
+        lines.append("")
+        for label, verb, route, execution in entries[:_MAX_EXISTING_EVIDENCE]:
+            lines.append(f"- {label}")
+            if route:
+                lines.append(f"  {verb}: {route}")
+            lines.append(f"  Execution: {execution}")
+        if len(entries) > _MAX_EXISTING_EVIDENCE:
+            lines.append(f"_…and {len(entries) - _MAX_EXISTING_EVIDENCE} more mapped test(s) in the full result._")
+        lines.append("")
+
+    executed = counts.get("tests_executed", 0) or _executed_test_count(result)
+    if executed:
+        lines.append(f"**Tests executed by Sydes:** Yes — {executed} test(s) run.")
+    else:
+        disabled = any(
+            "no-run-tests" in str(note) for note in _as_list(_get(result, "notes", default=[]))
+        )
+        if disabled:
+            lines.append(
+                "**Tests executed by Sydes:** No — test execution is disabled in this workflow "
+                "(`--no-run-tests`). Any test(s) found above are a handoff, not a gap: run them "
+                "in your own environment or existing CI to confirm."
+            )
+        else:
+            lines.append(
+                "**Tests executed by Sydes:** No. Any test(s) found above are a handoff, not a "
+                "gap: run them in your own environment or existing CI to confirm."
+            )
     lines.append("")
 
 
@@ -953,37 +998,12 @@ def _named_test_entries(result: dict[str, Any]) -> list[tuple[str, str, str, str
     return entries
 
 
-def render_existing_evidence(result: dict[str, Any], lines: list[str]) -> None:
-    """Named test evidence, not just an aggregate count -- "2 tests verify
-    this" tells a reviewer nothing they can act on; naming the test does.
-    Execution status is shown per test because a test being *mapped* is not
-    the same claim as it having been *run* -- see `render_execution`."""
-    counts = _get(result, "summary", "counts", default={})
-    summary = _relevant_tests_row(counts)
-    entries = _named_test_entries(result)
-    if not entries and summary == "None identified":
-        return
-
-    lines.append("### Existing evidence")
-    lines.append("")
-    lines.append(summary)
-    lines.append("")
-    for label, verb, route, execution in entries[:_MAX_EXISTING_EVIDENCE]:
-        lines.append(f"- {label}")
-        if route:
-            lines.append(f"  {verb}: {route}")
-        lines.append(f"  Execution: {execution}")
-    if len(entries) > _MAX_EXISTING_EVIDENCE:
-        lines.append(f"_…and {len(entries) - _MAX_EXISTING_EVIDENCE} more mapped test(s) in the full result._")
-    lines.append("")
-
-
 # ---------------------------------------------------------------------------
-# Execution -- explicit and separate from verification status. Whether a
-# test was *mapped* to an obligation and whether Sydes *ran* it are
-# different claims; folding "not run" into the same status word as "no test
-# found" is exactly the ambiguity a reviewer cannot resolve from the comment
-# alone (see `render_verification`'s docstring).
+# Shared by render_test_evidence above -- execution is explicit and
+# separate from verification status. Whether a test was *mapped* to an
+# obligation and whether Sydes *ran* it are different claims; folding "not
+# run" into the same status word as "no test found" is exactly the
+# ambiguity a reviewer cannot resolve from the comment alone.
 # ---------------------------------------------------------------------------
 
 
@@ -1012,32 +1032,6 @@ def _executed_test_count(result: dict[str, Any]) -> int:
     return len(seen)
 
 
-def render_execution(result: dict[str, Any], lines: list[str]) -> None:
-    counts = _get(result, "summary", "counts", default={})
-    executed = counts.get("tests_executed", 0) or _executed_test_count(result)
-
-    lines.append("### Execution")
-    lines.append("")
-    if executed:
-        lines.append(f"**Tests executed by Sydes:** Yes — {executed} test(s) run.")
-    else:
-        disabled = any(
-            "no-run-tests" in str(note) for note in _as_list(_get(result, "notes", default=[]))
-        )
-        if disabled:
-            lines.append(
-                "**Tests executed by Sydes:** No — test execution is disabled in this workflow "
-                "(`--no-run-tests`). Any test(s) found below are a handoff, not a gap: run them "
-                "in your own environment or existing CI to confirm."
-            )
-        else:
-            lines.append(
-                "**Tests executed by Sydes:** No. Any test(s) found below are a handoff, not a "
-                "gap: run them in your own environment or existing CI to confirm."
-            )
-    lines.append("")
-
-
 # ---------------------------------------------------------------------------
 # Still unverified -- one strict meaning throughout: Sydes does not have
 # enough EXECUTED evidence to call this behavior verified. Never conflated
@@ -1046,12 +1040,6 @@ def render_execution(result: dict[str, Any], lines: list[str]) -> None:
 # see `resolve_obligation_status` and its `--no-run-tests` override in
 # `verify/analyzer.py`), not re-derived here.
 # ---------------------------------------------------------------------------
-
-_STILL_UNVERIFIED_HEADER = (
-    "Sydes does not currently have enough executed evidence to claim these "
-    "behaviors are verified."
-)
-
 
 def _unverified_reason_phrase(obligation: dict[str, Any]) -> str:
     """A test Sydes found but could not run is a HANDOFF, not a dead end --
@@ -1076,12 +1064,6 @@ def _unverified_reason_phrase(obligation: dict[str, Any]) -> str:
     if reason:
         return reason[0].lower() + reason[1:] if len(reason) > 1 else reason.lower()
     return "impact path incomplete or verification evidence insufficient"
-
-
-_SURROUNDING_ROUTE_HEADER = (
-    "Pre-existing behavior on the same route that this change did not touch -- "
-    "worth knowing about, not a reason this PR is unhealthy."
-)
 
 
 def _categorize_obligations(
@@ -1115,123 +1097,71 @@ def _categorize_obligations(
     return verified_categories, unverified_rows
 
 
-def _render_obligation_group(
-    obligations: list[dict[str, Any]],
-    lines: list[str],
-    *,
-    verified_heading: str,
-    unverified_heading: str,
-    unverified_intro: str,
-    exclude_verified_labels: set[str] = frozenset(),
-) -> None:
-    verified_categories, unverified_rows = _categorize_obligations(obligations)
-    # A category (e.g. "Validation behavior") groups obligations by KIND,
-    # not by which specific statement -- a different, non-`introduced_by_
-    # change` obligation of the same kind can legitimately also be passed.
-    # True, but repeating the identical category label right under one
-    # already shown as verified above reads as a confusing duplicate, not
-    # as new information -- skip it here rather than show the same label
-    # twice for two different underlying facts.
-    verified_categories = [label for label in verified_categories if label not in exclude_verified_labels]
-    if verified_categories:
-        lines.append(f"### {verified_heading}")
-        lines.append("")
-        for label in verified_categories:
-            lines.append(f"- {label}")
-        lines.append("")
-    if unverified_rows:
-        lines.append(f"### {unverified_heading}")
-        lines.append("")
-        lines.append(f"_{unverified_intro}_")
-        lines.append("")
-        for label, phrase in unverified_rows:
-            lines.append(f"- **{label}:** {phrase}")
-        lines.append("")
+def render_what_is_still_unknown(result: dict[str, Any], lines: list[str]) -> None:
+    """One flat bullet list folding together what used to be four separate
+    top-level sections (Still unverified / Also on this route / Before
+    merge / Coverage limits). The distinctions those sections existed to
+    preserve are kept as inline wording on each bullet, never dropped:
 
+    - a gap about THIS change is a plain `**{category}:** {reason}` bullet;
+    - a gap on the surrounding, pre-existing route is tagged
+      `(pre-existing on this route)` right on the same bullet, so it is
+      never mistaken for a problem with the PR itself (see
+      `_obligations_split_by_relevance`) -- this is still visibly softer
+      than a this-change gap, just inline rather than under its own,
+      separately-headed section.
 
-def render_verification(result: dict[str, Any], lines: list[str]) -> None:
-    """Two groups, never one undifferentiated pile: what this diff itself
-    introduced (`about_this_change`) is reported first, under the same
-    "Verified"/"Still unverified" headings this section has always used --
-    that scoping is exactly what a reviewer's first question ("is THIS
-    change covered?") needs. Pre-existing behavior on the same route that
-    the diff never touched (`about_the_route`) is reported separately,
-    under visibly softer language, so it is never mistaken for a problem
-    with the PR itself (see `_obligations_split_by_relevance`).
+    When `introduced_by_change` is unpopulated everywhere (a known data gap
+    on some analysis paths), there is nothing to split on -- falls back to
+    the original undifferentiated set rather than invent a "this change"
+    claim with no signal behind it."""
+    bullets: list[str] = []
 
-    When `introduced_by_change` is unpopulated everywhere (a known data
-    gap on some analysis paths), there is nothing to split on -- falls
-    back to the original single, undifferentiated section rather than
-    invent a "this change" claim with no signal behind it."""
     about_this_change, about_the_route = _obligations_split_by_relevance(result)
-    if not about_this_change and not about_the_route:
-        return
+    if about_this_change or about_the_route:
+        if about_this_change:
+            _verified, this_change_unverified = _categorize_obligations(about_this_change)
+            for label, phrase in this_change_unverified:
+                bullets.append(f"**{label}:** {phrase}")
+            if about_the_route:
+                _verified, route_unverified = _categorize_obligations(about_the_route)
+                for label, phrase in route_unverified:
+                    bullets.append(f"**{label} (pre-existing on this route):** {phrase}")
+        else:
+            _verified, unverified = _categorize_obligations(about_the_route)
+            for label, phrase in unverified:
+                bullets.append(f"**{label}:** {phrase}")
 
-    if about_this_change:
-        this_change_verified, _unverified = _categorize_obligations(about_this_change)
-        _render_obligation_group(
-            about_this_change, lines,
-            verified_heading="Verified", unverified_heading="Still unverified",
-            unverified_intro=_STILL_UNVERIFIED_HEADER,
-        )
-        if about_the_route:
-            _render_obligation_group(
-                about_the_route, lines,
-                verified_heading="Also verified on this route",
-                unverified_heading="Also on this route (pre-existing)",
-                unverified_intro=_SURROUNDING_ROUTE_HEADER,
-                exclude_verified_labels=set(this_change_verified),
-            )
-    else:
-        _render_obligation_group(
-            about_the_route, lines,
-            verified_heading="Verified", unverified_heading="Still unverified",
-            unverified_intro=_STILL_UNVERIFIED_HEADER,
-        )
-
-
-# ---------------------------------------------------------------------------
-# Before merge
-# ---------------------------------------------------------------------------
-
-
-def render_before_merge(result: dict[str, Any], lines: list[str]) -> None:
-    """Only two deterministic, narrowly-scoped rules produce a bullet here --
-    both grounded in facts the renderer has already computed elsewhere, so
-    nothing is invented that isn't independently shown in System impact or
-    Verification:
-
-    1. A boundary was found in `System impact` that reaches beyond the
-       traced route(s) (the "Wider API surface" row) -- worth a reviewer's
-       explicit attention since it is, by definition, not covered by the
-       established path(s) above.
-    2. No relevant tests were identified at all for a change with a real,
-       found impact -- a safe, generic recommendation that never requires
-       guessing what the test should assert.
-
-    Reusing a raw obligation statement here (e.g. "Verify: malformed JSON
-    validation") was the exact awkward-bullet problem this rule replaces --
-    a fragment with no real sentence around it. When neither rule applies,
-    the section is omitted rather than padded with something ungrounded."""
+    # Former "Before merge" rules -- both grounded in facts already shown
+    # in What it may affect / the bullets above, nothing new invented here.
     _rows, wider_areas, has_any_impact = _system_impact_data(result)
     counts = _get(result, "summary", "counts", default={})
     # Not `mapped_tests` (required obligations only) -- a test that verifies
     # a non-required, advisory obligation is still a real reason not to ask
     # for another one.
     verifying_tests = counts.get("tests_verifying_behavior", 0)
-
-    bullets: list[str] = []
     if wider_areas:
         bullets.append("Verify the changed behavior on the wider API surface before merging.")
     if verifying_tests == 0 and has_any_impact:
         bullets.append("Add or run a test covering the affected behavior before merging.")
 
+    # Former "Coverage limits" -- a global, repository-wide caveat (e.g.
+    # "route composition is unresolved ... some routes may be missing"),
+    # never a claim about the specific path(s) shown in What it may affect
+    # above.
+    coverage_note = _pick_analysis_note(result, limit=200)
+    if coverage_note:
+        established_routes, _likely_routes = _flow_routes_by_status(result, _impact_status_by_id(result))
+        label = "Other coverage limits" if established_routes else "Coverage limit"
+        bullets.append(f"**{label}:** {coverage_note}")
+    bullets.extend(_route_prefix_notes(result))
+
     if not bullets:
         return
 
-    lines.append("### Before merge")
+    lines.append("### What is still unknown")
     lines.append("")
-    for bullet in bullets[:_MAX_BEFORE_MERGE]:
+    for bullet in bullets:
         lines.append(f"- {bullet}")
     lines.append("")
 
@@ -1375,42 +1305,11 @@ def _route_prefix_notes(result: dict[str, Any]) -> list[str]:
     return notes
 
 
-def render_coverage_limits(result: dict[str, Any], lines: list[str]) -> None:
-    """Developer-relevant limits only -- never a raw internal diagnostics
-    dump. Visible (not collapsed behind a click): a reviewer deciding
-    whether to trust "Still unverified" above needs to see why in the same
-    glance."""
-    body: list[str] = []
-
-    coverage_note = _pick_analysis_note(result, limit=200)
-    if coverage_note:
-        # A coverage-limit note is a global, repository-wide caveat (e.g.
-        # "route composition is unresolved ... some routes may be
-        # missing"), never a claim about the specific path(s) shown in
-        # Affected paths above -- when one was established, label it as
-        # scoped to the REST of the repository so it cannot read as "the
-        # path shown here is itself unresolved".
-        established_routes, _likely_routes = _flow_routes_by_status(result, _impact_status_by_id(result))
-        label = "Other coverage limits" if established_routes else "Coverage limit"
-        body.append(f"**{label}:** {coverage_note}")
-
-    body.extend(_route_prefix_notes(result))
-
-    if not body:
-        return
-
-    lines.append("### Coverage limits")
-    lines.append("")
-    for item in body:
-        lines.append(f"- {item}")
-    lines.append("")
-
-
 def render_details(result: dict[str, Any], lines: list[str]) -> None:
     """A tiny, deliberately sparse <details> block: changed-symbol grounding
-    only. Coverage limits live in their own visible section (see
-    `render_coverage_limits`) -- they are a reviewer-facing caveat, not
-    internal evidence to hide behind an extra click."""
+    only. Coverage limits are folded into "What is still unknown" (see
+    `render_what_is_still_unknown`) -- they are a reviewer-facing caveat,
+    not internal evidence to hide behind an extra click."""
     symbols = _as_list(_get(result, "change", "symbols", default=[]))
     test_paths = _test_file_paths(result)
     production_symbols = [
@@ -1460,14 +1359,10 @@ def render(result: dict[str, Any], run_url: str | None = None) -> str:
     lines: list[str] = [MARKER, ""]
     render_header(result, lines)
     render_change(result, lines)
-    render_change_analysis(result, lines)
-    render_system_impact(result, lines)
-    render_existing_evidence(result, lines)
-    render_execution(result, lines)
-    render_verification(result, lines)
-    render_before_merge(result, lines)
+    render_what_it_may_affect(result, lines)
+    render_test_evidence(result, lines)
+    render_what_is_still_unknown(result, lines)
     render_review(result, lines)
-    render_coverage_limits(result, lines)
     render_details(result, lines)
     render_footer(lines, run_url)
     return "\n".join(lines).rstrip() + "\n"
