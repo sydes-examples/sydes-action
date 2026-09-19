@@ -635,38 +635,46 @@ def select_representative_paths(
     )
 
 
-def _format_established_bullet(parts: list[str], connected_calls: list[str], omitted: int) -> str:
-    """One flat bullet line for an established path: a backtick-wrapped
-    route -> handler chain, then -- when this flow's own evidence
-    establishes it -- the symbol(s) the handler actually calls. A single
-    connected call reads as one more arrow hop inside the same code span
-    (the routine case); more than one is called out as plain trailing text
-    in explicit set notation (`{A, B}`), never chained with another arrow,
-    since the handler is proven to call each of these but never proven to
-    call them in any particular order -- an arrow there would fabricate a
-    sequence that was never traced. See the (now-removed) fenced-block
-    rendering this replaces for the original reasoning; the underlying
-    distinction is unchanged, just flattened to one line."""
-    chain = " → ".join(parts)
-    suffix = ""
-    if len(connected_calls) == 1:
-        chain += f" → {connected_calls[0]}"
-    elif connected_calls:
-        suffix += f" (handler also calls: {{{', '.join(connected_calls)}}})"
-    if omitted:
-        suffix += f" (+{omitted} more traced call(s))"
-    return f"`{chain}`{suffix}"
+def _render_established_block(
+    parts: list[str], connected_calls: list[str], omitted: int, lines: list[str]
+) -> None:
+    """The ASCII-ladder rendering for one established path: route, then
+    handler, then -- when this flow's own evidence establishes it -- the
+    symbol(s) the handler actually calls. A single connected call reads as
+    one more arrow hop (the routine case: a genuine, single-file sequence).
+    More than one uses tree-branch connectors (`├─`/`└─`), never another
+    arrow: the handler is proven to call each of these, but never proven to
+    call them in any particular order, and chaining them with `→` would
+    fabricate a sequence that was never traced. A bare route with no
+    resolved handler/calls renders as a plain bullet -- there is no ladder
+    to draw."""
+    if len(parts) > 1 or connected_calls:
+        lines.append("```text")
+        lines.append(parts[0])
+        for p in parts[1:]:
+            lines.append(f"  → {p}")
+        if len(connected_calls) == 1:
+            lines.append(f"  → {connected_calls[0]}")
+        elif connected_calls:
+            for call in connected_calls[:-1]:
+                lines.append(f"  ├─ {call}")
+            lines.append(f"  └─ {connected_calls[-1]}")
+        if omitted:
+            lines.append(f"  … +{omitted} more traced call(s)")
+        lines.append("```")
+    else:
+        lines.append(f"- `{parts[0]}`")
 
 
 def render_what_it_may_affect(result: dict[str, Any], lines: list[str]) -> None:
     """The section a reviewer actually needs: what area of the system this
-    reaches, and through what logical path -- as one flat, scannable bullet
-    list rather than a table plus separate established/likely blocks.
+    reaches, and through what logical path.
 
-    Confidence is never flattened away: an established item is a plain
-    bullet; anything not fully established keeps an explicit inline
-    qualifier ("(likely, not fully established)") rather than reading with
-    the same confidence as a proven path."""
+    Confidence is never flattened away: an established path renders as an
+    ASCII ladder (see `_render_established_block`) or a bare bullet, always
+    under its own "Established" label; anything not fully established
+    renders separately, under "Likely, not fully established", never
+    visually merged with a proven path."""
     lines.append("### What it may affect")
     lines.append("")
 
@@ -692,20 +700,32 @@ def render_what_it_may_affect(result: dict[str, Any], lines: list[str]) -> None:
         lines.append("")
         return
 
-    for parts, connected_calls, omitted in established:
-        lines.append(f"- {_format_established_bullet(parts, connected_calls, omitted)}")
-    if established_more:
-        lines.append(f"_…and {established_more} more established path(s) in the full result._")
+    if established:
+        lines.append("**Established**")
+        lines.append("")
+        for idx, (parts, connected_calls, omitted) in enumerate(established):
+            _render_established_block(parts, connected_calls, omitted, lines)
+            if (len(parts) > 1 or connected_calls) and idx < len(established) - 1:
+                lines.append("")  # blank line between fences -- otherwise
+                                   # adjacent ```text blocks can render as
+                                   # one merged block
+        if established_more:
+            lines.append(f"_…and {established_more} more established path(s) in the full result._")
+        lines.append("")
 
-    for label in likely:
-        lines.append(f"- `{label}` (likely, not fully established)")
-    if likely_more:
-        lines.append(f"_…and {likely_more} more likely impact(s) in the full result._")
+    if likely:
+        lines.append("**Likely, not fully established**")
+        lines.append("")
+        for label in likely:
+            lines.append(f"- {label}")
+        if likely_more:
+            lines.append(f"_…and {likely_more} more likely impact(s) in the full result._")
+        lines.append("")
 
     for bullet in other_area_bullets:
         lines.append(f"- {bullet}")
-
-    lines.append("")
+    if other_area_bullets:
+        lines.append("")
 
 
 # ---------------------------------------------------------------------------
@@ -865,8 +885,15 @@ def render_test_evidence(result: dict[str, Any], lines: list[str]) -> None:
     tests_summary = _relevant_tests_row(counts)
     entries = _named_test_entries(result)
     if entries or tests_summary != "None identified":
-        lines.append(tests_summary)
-        lines.append("")
+        # `tests_summary` is derived from `summary.counts` (an aggregate
+        # Sydes computes separately from `mapped_tests`/`unattached_
+        # evidence`); the two can disagree on a captured/trimmed result --
+        # confirmed on a real run, where "None identified" printed directly
+        # above a named test entry. Never print a contradicting aggregate
+        # line when named entries themselves prove otherwise.
+        if not (entries and tests_summary == "None identified"):
+            lines.append(tests_summary)
+            lines.append("")
         for label, verb, route, execution in entries[:_MAX_EXISTING_EVIDENCE]:
             lines.append(f"- {label}")
             if route:
@@ -1098,39 +1125,41 @@ def _categorize_obligations(
 
 
 def render_what_is_still_unknown(result: dict[str, Any], lines: list[str]) -> None:
-    """One flat bullet list folding together what used to be four separate
-    top-level sections (Still unverified / Also on this route / Before
-    merge / Coverage limits). The distinctions those sections existed to
-    preserve are kept as inline wording on each bullet, never dropped:
+    """One section, but not one undifferentiated pile: what used to be four
+    separate top-level headers (Still unverified / Also on this route /
+    Before merge / Coverage limits) becomes four bold sub-labels inside a
+    single "### What is still unknown", each a small group of bullets
+    rather than a full heading of its own. The distinctions those headers
+    existed to preserve are kept exactly, just demoted one level:
 
-    - a gap about THIS change is a plain `**{category}:** {reason}` bullet;
-    - a gap on the surrounding, pre-existing route is tagged
-      `(pre-existing on this route)` right on the same bullet, so it is
-      never mistaken for a problem with the PR itself (see
-      `_obligations_split_by_relevance`) -- this is still visibly softer
-      than a this-change gap, just inline rather than under its own,
-      separately-headed section.
+    - a gap about THIS change groups under "Gaps in this change";
+    - a gap on the surrounding, pre-existing route groups separately under
+      "Also on this route (pre-existing)", so it is never mistaken for a
+      problem with the PR itself (see `_obligations_split_by_relevance`);
+    - the former "Before merge" nudges group under "Before merging";
+    - the former "Coverage limits" caveats group under "Coverage limits".
 
     When `introduced_by_change` is unpopulated everywhere (a known data gap
     on some analysis paths), there is nothing to split on -- falls back to
-    the original undifferentiated set rather than invent a "this change"
-    claim with no signal behind it."""
-    bullets: list[str] = []
+    one undifferentiated "Gaps in this change" group rather than invent a
+    "this change" claim with no signal behind it."""
+    this_change_bullets: list[str] = []
+    route_bullets: list[str] = []
 
     about_this_change, about_the_route = _obligations_split_by_relevance(result)
     if about_this_change or about_the_route:
         if about_this_change:
             _verified, this_change_unverified = _categorize_obligations(about_this_change)
             for label, phrase in this_change_unverified:
-                bullets.append(f"**{label}:** {phrase}")
+                this_change_bullets.append(f"**{label}:** {phrase}")
             if about_the_route:
                 _verified, route_unverified = _categorize_obligations(about_the_route)
                 for label, phrase in route_unverified:
-                    bullets.append(f"**{label} (pre-existing on this route):** {phrase}")
+                    route_bullets.append(f"**{label}:** {phrase}")
         else:
             _verified, unverified = _categorize_obligations(about_the_route)
             for label, phrase in unverified:
-                bullets.append(f"**{label}:** {phrase}")
+                this_change_bullets.append(f"**{label}:** {phrase}")
 
     # Former "Before merge" rules -- both grounded in facts already shown
     # in What it may affect / the bullets above, nothing new invented here.
@@ -1140,30 +1169,41 @@ def render_what_is_still_unknown(result: dict[str, Any], lines: list[str]) -> No
     # a non-required, advisory obligation is still a real reason not to ask
     # for another one.
     verifying_tests = counts.get("tests_verifying_behavior", 0)
+    before_merge_bullets: list[str] = []
     if wider_areas:
-        bullets.append("Verify the changed behavior on the wider API surface before merging.")
+        before_merge_bullets.append("Verify the changed behavior on the wider API surface before merging.")
     if verifying_tests == 0 and has_any_impact:
-        bullets.append("Add or run a test covering the affected behavior before merging.")
+        before_merge_bullets.append("Add or run a test covering the affected behavior before merging.")
 
     # Former "Coverage limits" -- a global, repository-wide caveat (e.g.
     # "route composition is unresolved ... some routes may be missing"),
     # never a claim about the specific path(s) shown in What it may affect
     # above.
+    coverage_bullets: list[str] = []
     coverage_note = _pick_analysis_note(result, limit=200)
     if coverage_note:
         established_routes, _likely_routes = _flow_routes_by_status(result, _impact_status_by_id(result))
         label = "Other coverage limits" if established_routes else "Coverage limit"
-        bullets.append(f"**{label}:** {coverage_note}")
-    bullets.extend(_route_prefix_notes(result))
+        coverage_bullets.append(f"**{label}:** {coverage_note}")
+    coverage_bullets.extend(_route_prefix_notes(result))
 
-    if not bullets:
+    if not (this_change_bullets or route_bullets or before_merge_bullets or coverage_bullets):
         return
 
     lines.append("### What is still unknown")
     lines.append("")
-    for bullet in bullets:
-        lines.append(f"- {bullet}")
-    lines.append("")
+    for heading, group in (
+        ("Gaps in this change", this_change_bullets),
+        ("Also on this route (pre-existing)", route_bullets),
+        ("Before merging", before_merge_bullets),
+        ("Coverage limits", coverage_bullets),
+    ):
+        if not group:
+            continue
+        lines.append(f"**{heading}**")
+        for bullet in group:
+            lines.append(f"- {bullet}")
+        lines.append("")
 
 
 # ---------------------------------------------------------------------------

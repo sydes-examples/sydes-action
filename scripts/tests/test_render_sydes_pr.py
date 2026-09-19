@@ -131,12 +131,12 @@ def test_established_and_inferred_both_shown_and_distinct():
     out = r.render(result)
     section = out.split("### What it may affect")[1].split("###")[0]
     # The two kinds of evidence must never be visually merged into one
-    # bullet -- at least one bare (established) bullet and at least one
-    # inline-qualified (likely) bullet, established ones listed first.
-    established_match = re.search(r"^- `[^`]+`$", section, re.MULTILINE)
-    likely_idx = section.index("(likely, not fully established)")
-    assert established_match is not None
-    assert established_match.start() < likely_idx
+    # list -- each gets its own bold sub-label, Established first.
+    assert "**Established**" in section
+    assert "**Likely, not fully established**" in section
+    established_idx = section.index("**Established**")
+    likely_idx = section.index("**Likely, not fully established**")
+    assert established_idx < likely_idx
 
 
 # ---------------------------------------------------------------------------
@@ -174,12 +174,11 @@ def test_many_established_paths_are_truncated_deterministically():
     result = _base_result(affected_flows=flows, accepted_impacts=impacts)
     out = r.render(result)
 
-    section = out.split("### What it may affect")[1].split("###")[0]
-    shown = len(re.findall(r"^- `[^`]+`$", section, re.MULTILINE))
+    shown = out.count("```text")
     assert shown == r._MAX_ESTABLISHED_PATHS
     assert f"…and {10 - r._MAX_ESTABLISHED_PATHS} more established path(s)" in out
-    # The comment must stay short even with 10 affected routes.
-    assert len(out.splitlines()) < 60
+    # The comment must stay reasonably short even with 10 affected routes.
+    assert len(out.splitlines()) < 80
 
 
 def test_many_likely_paths_are_truncated_deterministically():
@@ -491,7 +490,7 @@ def test_system_impact_row_names_a_single_route_concretely():
     )
     out = r.render(result)
     section = out.split("### What it may affect")[1].split("###")[0]
-    assert "- `POST /pets → PetController.create → PetService.create`" in section
+    assert "```text\nPOST /pets\n  → PetController.create\n  → PetService.create\n```" in section
     # The old count-only phrasing must never appear.
     assert "1 established" not in out
 
@@ -979,8 +978,9 @@ def test_multiple_connected_calls_are_not_chained_as_a_sequence():
     # no "→ add_comment" or "→ create_article" anywhere in the output.
     assert "→ add_comment" not in out
     assert "→ create_article" not in out
-    # Rendered instead as an explicit, unordered set.
-    assert "handler also calls: {add_comment, create_article}" in out
+    # Rendered instead as explicit, unordered tree-branch connectors.
+    assert "├─ add_comment" in out
+    assert "└─ create_article" in out
 
 
 def test_global_changed_nodes_not_auto_rendered_under_every_unrelated_flow():
@@ -1104,8 +1104,8 @@ def test_flow_without_matching_impact_falls_back_to_its_own_status_not_proven():
     )
     out = r.render(result)
     section = out.split("### What it may affect")[1].split("###")[0]
-    assert re.search(r"^- `[^`]+`$", section, re.MULTILINE) is None
-    assert "(likely, not fully established)" in section
+    assert "**Established**" not in section
+    assert "**Likely, not fully established**" in section
     assert "PetController.create" in section
 
 
@@ -1128,8 +1128,8 @@ def test_flow_without_matching_impact_defaults_proven_only_when_flow_itself_says
     )
     out = r.render(result)
     section = out.split("### What it may affect")[1].split("###")[0]
-    assert re.search(r"^- `[^`]+`$", section, re.MULTILINE) is not None
-    assert "(likely, not fully established)" not in section
+    assert "**Established**" in section
+    assert "**Likely, not fully established**" not in section
 
 
 # ---------------------------------------------------------------------------
@@ -1416,9 +1416,9 @@ def test_change_analysis_all_red_when_nothing_is_established():
 
 def test_verification_separates_this_change_from_the_surrounding_route():
     """The core reframing: a route whose changed-behavior obligation is
-    unverified must show as a plain bullet (about THIS change), while a
-    completely unrelated, pre-existing obligation on the same route is
-    tagged inline "(pre-existing on this route)" -- never merged into one
+    unverified must show under "Gaps in this change", while a completely
+    unrelated, pre-existing obligation on the same route groups separately
+    under "Also on this route (pre-existing)" -- never merged into one
     undifferentiated, indistinguishable list."""
     result = _base_result(
         accepted_impacts=[{"id": "flow:x", "status": "proven"}],
@@ -1438,11 +1438,13 @@ def test_verification_separates_this_change_from_the_surrounding_route():
     out = r.render(result)
     assert "### What is still unknown" in out
     section = out.split("### What is still unknown")[1].split("###")[0]
-    assert "**Validation behavior:**" in section
-    # The this-change bullet must never carry the pre-existing tag...
-    assert "**Validation behavior (pre-existing on this route):**" not in section
-    # ...while the unrelated, pre-existing one must.
-    assert "**Event emission (pre-existing on this route):**" in section
+    assert "**Gaps in this change**" in section
+    assert "**Also on this route (pre-existing)**" in section
+    this_change_block = section.split("**Also on this route (pre-existing)**")[0]
+    route_block = section.split("**Also on this route (pre-existing)**")[1]
+    assert "**Validation behavior:**" in this_change_block
+    assert "Event emission" not in this_change_block
+    assert "**Event emission:**" in route_block
 
 
 def test_verification_falls_back_to_one_section_when_introduced_by_change_is_unpopulated():
@@ -1463,8 +1465,9 @@ def test_verification_falls_back_to_one_section_when_introduced_by_change_is_unp
     )
     out = r.render(result)
     section = out.split("### What is still unknown")[1].split("###")[0]
+    assert "**Gaps in this change**" in section
     assert "**Validation behavior:**" in section
-    assert "(pre-existing on this route)" not in section
+    assert "**Also on this route (pre-existing)**" not in section
 
 
 def test_executed_test_count_falls_back_to_obligation_executions():
