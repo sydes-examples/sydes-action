@@ -1,0 +1,775 @@
+{
+  "version": "v3",
+  "kind": "sydes_change_verification",
+  "generated_at": "2026-09-08T19:37:23.296773+00:00",
+  "change": {
+    "base": "5152e8b6e29bd8f1ddd68c62a1a2471b5b34fd44",
+    "head": "2356e9f9281854e1fbb4635b08c121607e4eb412",
+    "merge_base": "5152e8b6e29bd8f1ddd68c62a1a2471b5b34fd44",
+    "repos": [
+      {
+        "name": "app",
+        "root": "/home/runner/work/Kokoro-FastAPI/Kokoro-FastAPI"
+      }
+    ],
+    "includes_working_tree": false,
+    "files": [
+      {
+        "repo": "app",
+        "path": ".github/workflows/sydes.yml",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "unknown",
+        "added_lines": 1,
+        "removed_lines": 0,
+        "hunks": [
+          {
+            "start_line": 21,
+            "end_line": 21
+          }
+        ],
+        "symbols": [],
+        "binary": false
+      },
+      {
+        "repo": "app",
+        "path": "api/src/services/text_processing/text_processor.py",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "source_route_candidate",
+        "added_lines": 24,
+        "removed_lines": 5,
+        "hunks": [
+          {
+            "start_line": 171,
+            "end_line": 175
+          },
+          {
+            "start_line": 177,
+            "end_line": 195
+          }
+        ],
+        "symbols": [
+          "app:api/src/services/text_processing/text_processor.py:check_pause_budget"
+        ],
+        "binary": false
+      },
+      {
+        "repo": "app",
+        "path": "api/tests/test_openai_endpoints.py",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "test_usage_candidate",
+        "added_lines": 16,
+        "removed_lines": 0,
+        "hunks": [
+          {
+            "start_line": 322,
+            "end_line": 337
+          }
+        ],
+        "symbols": [
+          "app:api/tests/test_openai_endpoints.py:test_openai_speech_single_oversized_pause_tag_is_400"
+        ],
+        "binary": false
+      },
+      {
+        "repo": "app",
+        "path": "api/tests/test_pause_bounds.py",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "test_usage_candidate",
+        "added_lines": 18,
+        "removed_lines": 0,
+        "hunks": [
+          {
+            "start_line": 7,
+            "end_line": 7
+          },
+          {
+            "start_line": 52,
+            "end_line": 68
+          }
+        ],
+        "symbols": [
+          "app:api/tests/test_pause_bounds.py:test_single_pause_tag_at_limit_passes",
+          "app:api/tests/test_pause_bounds.py:test_single_pause_tag_exceeding_limit_is_rejected"
+        ],
+        "binary": false
+      }
+    ],
+    "symbols": [
+      {
+        "id": "app:api/src/services/text_processing/text_processor.py:check_pause_budget",
+        "repo": "app",
+        "file": "api/src/services/text_processing/text_processor.py",
+        "name": "check_pause_budget",
+        "qualified_name": "check_pause_budget",
+        "cbm_qualified_name": "home-runner-work-Kokoro-FastAPI-Kokoro-FastAPI.api.src.services.text_processing.text_processor.check_pause_budget",
+        "kind": "function",
+        "language": "python",
+        "start_line": 176,
+        "end_line": 200,
+        "change_type": "modified",
+        "changed_lines": 19,
+        "decorators": []
+      },
+      {
+        "id": "app:api/tests/test_openai_endpoints.py:test_openai_speech_single_oversized_pause_tag_is_400",
+        "repo": "app",
+        "file": "api/tests/test_openai_endpoints.py",
+        "name": "test_openai_speech_single_oversized_pause_tag_is_400",
+        "qualified_name": "test_openai_speech_single_oversized_pause_tag_is_400",
+        "cbm_qualified_name": "home-runner-work-Kokoro-FastAPI-Kokoro-FastAPI.api.tests.test_openai_endpoints.test_openai_speech_single_oversized_pause_tag_is_400",
+        "kind": "function",
+        "language": "python",
+        "start_line": 322,
+        "end_line": 335,
+        "change_type": "modified",
+        "changed_lines": 14,
+        "decorators": []
+      },
+      {
+        "id": "app:api/tests/test_pause_bounds.py:test_single_pause_tag_exceeding_limit_is_rejected",
+        "repo": "app",
+        "file": "api/tests/test_pause_bounds.py",
+        "name": "test_single_pause_tag_exceeding_limit_is_rejected",
+        "qualified_name": "test_single_pause_tag_exceeding_limit_is_rejected",
+        "cbm_qualified_name": "home-runner-work-Kokoro-FastAPI-Kokoro-FastAPI.api.tests.test_pause_bounds.test_single_pause_tag_exceeding_limit_is_rejected",
+        "kind": "function",
+        "language": "python",
+        "start_line": 54,
+        "end_line": 61,
+        "change_type": "modified",
+        "changed_lines": 8,
+        "decorators": []
+      },
+      {
+        "id": "app:api/tests/test_pause_bounds.py:test_single_pause_tag_at_limit_passes",
+        "repo": "app",
+        "file": "api/tests/test_pause_bounds.py",
+        "name": "test_single_pause_tag_at_limit_passes",
+        "qualified_name": "test_single_pause_tag_at_limit_passes",
+        "cbm_qualified_name": "home-runner-work-Kokoro-FastAPI-Kokoro-FastAPI.api.tests.test_pause_bounds.test_single_pause_tag_at_limit_passes",
+        "kind": "function",
+        "language": "python",
+        "start_line": 64,
+        "end_line": 68,
+        "change_type": "modified",
+        "changed_lines": 5,
+        "decorators": []
+      }
+    ],
+    "notes": []
+  },
+  "summary": {
+    "risk": "MEDIUM",
+    "verdict": "VERIFICATION INCOMPLETE",
+    "headline": "11 obligation(s) across 2 flow(s): 0 passed, 0 failed, 2 unverified, 9 unknown",
+    "counts": {
+      "changed_files": 4,
+      "changed_source_files": 1,
+      "changed_test_files": 2,
+      "changed_symbols": 4,
+      "affected_flows": 2,
+      "flows_partially_analyzed": 0,
+      "code_findings": 0,
+      "obligations": 11,
+      "obligations_introduced_by_change": 0,
+      "obligations_passed": 0,
+      "obligations_failed": 0,
+      "obligations_unverified": 2,
+      "obligations_unknown": 9,
+      "mapped_tests": 29,
+      "supporting_tests": 100,
+      "tests_executed": 0,
+      "verification_gaps": 0,
+      "runtime_dependencies": 1,
+      "cross_repo_impacts": 0,
+      "impacts_proven": 2,
+      "impacts_inferred": 0,
+      "impacts_not_modeled": 0,
+      "unresolved_changed_symbols": 3,
+      "tests_exercising_flows": 29,
+      "tests_supporting_behavior": 0,
+      "tests_verifying_behavior": 29
+    },
+    "risk_reasons": [
+      "9 obligation(s) could not be executed",
+      "2 obligation(s) have no verifying test"
+    ]
+  },
+  "code_review_status": "completed",
+  "code_findings": [],
+  "accepted_impacts": [
+    {
+      "id": "flow:POST:/audio/speech",
+      "label": "POST /audio/speech",
+      "repo": "app",
+      "kind": "http_route",
+      "status": "proven",
+      "changed_symbols": [
+        "check_pause_budget"
+      ],
+      "route_method": "POST",
+      "route_path": "/audio/speech",
+      "llm_confidence": null,
+      "llm_reason": null,
+      "llm_inference_type": null,
+      "llm_uncertainty": null,
+      "corroborated": null,
+      "behavior_label": "",
+      "verification_model_status": "modeled"
+    },
+    {
+      "id": "flow:POST:/dev/captioned_speech",
+      "label": "POST /dev/captioned_speech",
+      "repo": "app",
+      "kind": "http_route",
+      "status": "proven",
+      "changed_symbols": [
+        "check_pause_budget"
+      ],
+      "route_method": "POST",
+      "route_path": "/dev/captioned_speech",
+      "llm_confidence": null,
+      "llm_reason": null,
+      "llm_inference_type": null,
+      "llm_uncertainty": null,
+      "corroborated": null,
+      "behavior_label": "",
+      "verification_model_status": "modeled"
+    }
+  ],
+  "pr_semantic_analysis": {
+    "origin": "llm_hypothesis",
+    "change_summary": "The code change adds a new stricter validation on pause durations in text processing: any single pause tag that specifies a duration more than twice the configured maximum pause duration is now rejected outright with a validation error, rather than silently clamping it down to the maximum duration. This prevents overly large single pauses from being accepted and truncated, enforcing stronger input constraints. Corresponding tests were added to ensure this behavior.",
+    "behavior_changes": [
+      {
+        "description": "Pause duration validation now rejects any single pause tag exceeding twice the maximum allowed pause duration, instead of silently clamping it down to the maximum allowed. This makes pause duration limits stricter at the single-tag level, preventing unexpectedly large pauses from passing the check.",
+        "changed_symbols": [
+          "check_pause_budget"
+        ],
+        "evidence": [
+          "In text_processor.py, check_pause_budget() now introduces MAX_SINGLE_PAUSE_MULTIPLE=2",
+          "check_pause_budget iterates over all pause tags, raising ValueError if any tag's raw duration exceeds 2 x max_pause_duration_s",
+          "Previously, durations were clamped to max_pause_duration_s silently, now tags over the limit cause rejection",
+          "Tests in test_pause_bounds.py and test_openai_endpoints.py verify single-tag durations above limit cause errors",
+          "The added test test_openai_speech_single_oversized_pause_tag_is_400 verifies API responds with 400 on oversized pauses"
+        ],
+        "confidence": 1.0
+      }
+    ],
+    "important_symbols": [
+      {
+        "repo": "app",
+        "file": "api/src/services/text_processing/text_processor.py",
+        "symbol": "check_pause_budget",
+        "reason": "Core function where the pause duration validation behavior changed, shifting from silent clamping to explicit rejection for single excessive pause tags."
+      },
+      {
+        "repo": "app",
+        "file": "api/tests/test_pause_bounds.py",
+        "symbol": "test_single_pause_tag_exceeding_limit_is_rejected",
+        "reason": "Unit test that confirms the new validation behavior rejects single pause tags above the limit."
+      },
+      {
+        "repo": "app",
+        "file": "api/tests/test_openai_endpoints.py",
+        "symbol": "test_openai_speech_single_oversized_pause_tag_is_400",
+        "reason": "Integration-level test verifying that the API surface returns HTTP 400 on input with an oversized pause tag, showing end-to-end effect."
+      }
+    ],
+    "investigation_hints": [
+      {
+        "description": "Investigate how pause tag duration limits affect text-to-speech processing and segmentation.",
+        "related_symbols": [
+          "check_pause_budget",
+          "smart_split"
+        ],
+        "concepts": [
+          "input validation",
+          "pause duration clamping",
+          "text segmentation",
+          "TTS processing"
+        ],
+        "likely_boundary_types": [
+          "api",
+          "callable"
+        ]
+      },
+      {
+        "description": "Verify how the API layer maps validation errors from check_pause_budget to client HTTP 400 responses.",
+        "related_symbols": [
+          "test_openai_speech_single_oversized_pause_tag_is_400"
+        ],
+        "concepts": [
+          "validation error handling",
+          "API input sanitation",
+          "error propagation"
+        ],
+        "likely_boundary_types": [
+          "api"
+        ]
+      }
+    ],
+    "likely_boundary_types": [
+      "api",
+      "callable"
+    ],
+    "local_risks": [
+      "Clients relying on silent clamping may now receive errors, causing failure in existing workflows if oversized pauses occur.",
+      "Consistency of pause duration limits across different processing stages (pre-segmentation, segmentation) must be upheld to avoid desynchronization.",
+      "The newly added hard limit relies on the constant MAX_SINGLE_PAUSE_MULTIPLE; changes to related settings could cause unexpected rejections or leniency if not synchronized.",
+      "Care must be taken that error messages are clear so clients can adjust pause durations accordingly."
+    ],
+    "uncertainties": [
+      "It is uncertain whether upstream callers or other subsystems rely on silent clamping behavior and how they handle rejections now.",
+      "The exact places where check_pause_budget is invoked within the full system processing pipeline are not visible here.",
+      "Details of how smart_split interacts with clamped durations versus rejected durations are unknown without seeing smart_split code.",
+      "Whether any downstream async or external systems depend on pause duration semantics is not clear."
+    ]
+  },
+  "affected_boundaries": [
+    {
+      "id": "boundary:api:app:home-runner-work-Kokoro-FastAPI-Kokoro-FastAPI.api.src.routers.development.create_captioned_speech:api/src/routers/development.py",
+      "kind": "api",
+      "subtype": "http",
+      "repo": "app",
+      "file": "api/src/routers/development.py",
+      "symbol": "create_captioned_speech",
+      "label": "home-runner-work-Kokoro-FastAPI-Kokoro-FastAPI.api.src.routers.development.create_captioned_speech",
+      "changed_symbols": [
+        "check_pause_budget"
+      ],
+      "evidence": [
+        "calls:home-runner-work-Kokoro-FastAPI-Kokoro-FastAPI.api.src.routers.development.create_captioned_speech"
+      ],
+      "distance": 1,
+      "evidence_strength": "strong",
+      "status": "proven",
+      "reason": null,
+      "uncertainty": null,
+      "llm_confidence": null
+    },
+    {
+      "id": "boundary:api:app:home-runner-work-Kokoro-FastAPI-Kokoro-FastAPI.api.src.routers.openai_compatible.create_speech:api/src/routers/openai_compatible.py",
+      "kind": "api",
+      "subtype": "http",
+      "repo": "app",
+      "file": "api/src/routers/openai_compatible.py",
+      "symbol": "create_speech",
+      "label": "home-runner-work-Kokoro-FastAPI-Kokoro-FastAPI.api.src.routers.openai_compatible.create_speech",
+      "changed_symbols": [
+        "check_pause_budget"
+      ],
+      "evidence": [
+        "calls:home-runner-work-Kokoro-FastAPI-Kokoro-FastAPI.api.src.routers.openai_compatible.create_speech"
+      ],
+      "distance": 1,
+      "evidence_strength": "strong",
+      "status": "proven",
+      "reason": null,
+      "uncertainty": null,
+      "llm_confidence": null
+    },
+    {
+      "id": "boundary:inferred:callable:app:check_pause_budget:0",
+      "kind": "callable",
+      "subtype": "service",
+      "repo": "app",
+      "file": "api/src/services/text_processing/text_processor.py",
+      "symbol": "check_pause_budget",
+      "label": "pause duration validation service boundary",
+      "changed_symbols": [
+        "check_pause_budget"
+      ],
+      "evidence": [
+        "changed_symbols symbol check_pause_budget in api/src/services/text_processing/text_processor.py",
+        "change_summary describing stricter validation behavior in pause durations in text processing"
+      ],
+      "distance": 0,
+      "evidence_strength": "medium",
+      "status": "inferred",
+      "reason": "The function check_pause_budget enforces stricter pause duration validation within the text processing service, representing a callable service boundary where input validation logic applies before proceeding further in the text processing pipeline.",
+      "uncertainty": "It is unclear exactly where and how check_pause_budget is invoked within the system pipeline and whether it is directly crossed by external callers or only internal services; also unknown if downstream async or external systems rely on previous clamping behavior.",
+      "llm_confidence": 0.85
+    }
+  ],
+  "affected_flows": [
+    {
+      "id": "flow:POST:/audio/speech",
+      "entry_kind": "route",
+      "entry_label": "POST /audio/speech",
+      "repo": "app",
+      "method": "POST",
+      "path": "/audio/speech",
+      "handler": "create_speech",
+      "changed_nodes": [
+        {
+          "repo": "app",
+          "file": "api/src/services/text_processing/text_processor.py",
+          "symbol": "check_pause_budget",
+          "line": 176
+        },
+        {
+          "repo": "app",
+          "file": "api/tests/test_openai_endpoints.py",
+          "symbol": "test_openai_speech_single_oversized_pause_tag_is_400",
+          "line": 322
+        },
+        {
+          "repo": "app",
+          "file": "api/tests/test_pause_bounds.py",
+          "symbol": "test_single_pause_tag_exceeding_limit_is_rejected",
+          "line": 54
+        },
+        {
+          "repo": "app",
+          "file": "api/tests/test_pause_bounds.py",
+          "symbol": "test_single_pause_tag_at_limit_passes",
+          "line": 64
+        }
+      ],
+      "analysis_status": "complete",
+      "status": "unknown",
+      "impact_status": "proven",
+      "obligations": [
+        {
+          "id": "flow:POST:/audio/speech::obligation-1",
+          "flow_id": "flow:POST:/audio/speech",
+          "kind": "route_contract",
+          "statement": "POST /audio/speech responds 201 \u2014 Default 201 response skeleton.",
+          "origin": "api_contract",
+          "introduced_by_change": false,
+          "required": true,
+          "status": "unverified",
+          "reason": "9 test(s) exercise this flow but none assert this behavior"
+        },
+        {
+          "id": "flow:POST:/audio/speech::obligation-2",
+          "flow_id": "flow:POST:/audio/speech",
+          "kind": "route_contract",
+          "statement": "contract happy path",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unverified",
+          "reason": "9 test(s) exercise this flow but none assert this behavior"
+        },
+        {
+          "id": "flow:POST:/audio/speech::obligation-6",
+          "flow_id": "flow:POST:/audio/speech",
+          "kind": "route_contract",
+          "statement": "validates response body shape matches contract",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unverified",
+          "reason": "9 test(s) exercise this flow but none assert this behavior"
+        },
+        {
+          "id": "flow:POST:/audio/speech::obligation-8",
+          "flow_id": "flow:POST:/audio/speech",
+          "kind": "validation",
+          "statement": "POST /audio/speech enforces `if request.allow_voice_tags:`",
+          "origin": "trace_step",
+          "introduced_by_change": false,
+          "required": true,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:POST:/audio/speech::obligation-7",
+          "flow_id": "flow:POST:/audio/speech",
+          "kind": "validation",
+          "statement": "POST /audio/speech enforces `if request.model not in _openai_mappings[\"models\"]:` and responds 400",
+          "origin": "trace_step",
+          "introduced_by_change": false,
+          "required": true,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:POST:/audio/speech::obligation-11",
+          "flow_id": "flow:POST:/audio/speech",
+          "kind": "validation",
+          "statement": "POST /audio/speech enforces `if request.return_download_link:`",
+          "origin": "trace_step",
+          "introduced_by_change": false,
+          "required": true,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:POST:/audio/speech::obligation-9",
+          "flow_id": "flow:POST:/audio/speech",
+          "kind": "validation",
+          "statement": "POST /audio/speech enforces `if request.ssml:`",
+          "origin": "trace_step",
+          "introduced_by_change": false,
+          "required": true,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:POST:/audio/speech::obligation-10",
+          "flow_id": "flow:POST:/audio/speech",
+          "kind": "validation",
+          "statement": "POST /audio/speech enforces `if request.stream:`",
+          "origin": "trace_step",
+          "introduced_by_change": false,
+          "required": true,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:POST:/audio/speech::obligation-5",
+          "flow_id": "flow:POST:/audio/speech",
+          "kind": "validation",
+          "statement": "malformed JSON validation",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:POST:/audio/speech::obligation-4",
+          "flow_id": "flow:POST:/audio/speech",
+          "kind": "validation",
+          "statement": "verifies POST /audio/speech rejects invalid payloads",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:POST:/audio/speech::obligation-3",
+          "flow_id": "flow:POST:/audio/speech",
+          "kind": "validation",
+          "statement": "verifies POST /audio/speech rejects missing required fields",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        }
+      ]
+    },
+    {
+      "id": "flow:POST:/dev/captioned_speech",
+      "entry_kind": "route",
+      "entry_label": "POST /dev/captioned_speech",
+      "repo": "app",
+      "method": "POST",
+      "path": "/dev/captioned_speech",
+      "handler": "create_captioned_speech",
+      "changed_nodes": [
+        {
+          "repo": "app",
+          "file": "api/src/services/text_processing/text_processor.py",
+          "symbol": "check_pause_budget",
+          "line": 176
+        },
+        {
+          "repo": "app",
+          "file": "api/tests/test_openai_endpoints.py",
+          "symbol": "test_openai_speech_single_oversized_pause_tag_is_400",
+          "line": 322
+        },
+        {
+          "repo": "app",
+          "file": "api/tests/test_pause_bounds.py",
+          "symbol": "test_single_pause_tag_exceeding_limit_is_rejected",
+          "line": 54
+        },
+        {
+          "repo": "app",
+          "file": "api/tests/test_pause_bounds.py",
+          "symbol": "test_single_pause_tag_at_limit_passes",
+          "line": 64
+        }
+      ],
+      "analysis_status": "complete",
+      "status": "unknown",
+      "impact_status": "proven",
+      "obligations": [
+        {
+          "id": "flow:POST:/dev/captioned_speech::obligation-1",
+          "flow_id": "flow:POST:/dev/captioned_speech",
+          "kind": "route_contract",
+          "statement": "POST /dev/captioned_speech responds 201 \u2014 Default 201 response skeleton.",
+          "origin": "api_contract",
+          "introduced_by_change": false,
+          "required": true,
+          "status": "unverified",
+          "reason": "15 test(s) exercise this flow but none assert this behavior"
+        },
+        {
+          "id": "flow:POST:/dev/captioned_speech::obligation-2",
+          "flow_id": "flow:POST:/dev/captioned_speech",
+          "kind": "route_contract",
+          "statement": "contract happy path",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:POST:/dev/captioned_speech::obligation-6",
+          "flow_id": "flow:POST:/dev/captioned_speech",
+          "kind": "route_contract",
+          "statement": "validates response body shape matches contract",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:POST:/dev/captioned_speech::obligation-7",
+          "flow_id": "flow:POST:/dev/captioned_speech",
+          "kind": "validation",
+          "statement": "POST /dev/captioned_speech enforces `if request.allow_voice_tags:`",
+          "origin": "trace_step",
+          "introduced_by_change": false,
+          "required": true,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:POST:/dev/captioned_speech::obligation-10",
+          "flow_id": "flow:POST:/dev/captioned_speech",
+          "kind": "validation",
+          "statement": "POST /dev/captioned_speech enforces `if request.return_download_link:`",
+          "origin": "trace_step",
+          "introduced_by_change": false,
+          "required": true,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:POST:/dev/captioned_speech::obligation-8",
+          "flow_id": "flow:POST:/dev/captioned_speech",
+          "kind": "validation",
+          "statement": "POST /dev/captioned_speech enforces `if request.ssml:`",
+          "origin": "trace_step",
+          "introduced_by_change": false,
+          "required": true,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:POST:/dev/captioned_speech::obligation-9",
+          "flow_id": "flow:POST:/dev/captioned_speech",
+          "kind": "validation",
+          "statement": "POST /dev/captioned_speech enforces `if request.stream:`",
+          "origin": "trace_step",
+          "introduced_by_change": false,
+          "required": true,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:POST:/dev/captioned_speech::obligation-5",
+          "flow_id": "flow:POST:/dev/captioned_speech",
+          "kind": "validation",
+          "statement": "malformed JSON validation",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:POST:/dev/captioned_speech::obligation-4",
+          "flow_id": "flow:POST:/dev/captioned_speech",
+          "kind": "validation",
+          "statement": "verifies POST /dev/captioned_speech rejects invalid payloads",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:POST:/dev/captioned_speech::obligation-3",
+          "flow_id": "flow:POST:/dev/captioned_speech",
+          "kind": "validation",
+          "statement": "verifies POST /dev/captioned_speech rejects missing required fields",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        }
+      ]
+    }
+  ],
+  "unresolved_changed_symbols": 3,
+  "analysis_status": "partial",
+  "analysis_notes": [
+    "Route composition is unresolved in this repository; some routes may be missing.",
+    "Structural exploration was bounded for this change (calls hop 2 filled a full page); boundaries beyond the explored neighborhood are not established either way.",
+    "3 changed symbol(s) have no established impact path to any entrypoint (an AI-inferred candidate may still exist for one \u2014 see AFFECTED BEHAVIOR \u2014 but that is not the same as resolved impact coverage)."
+  ],
+  "test_executions": [],
+  "ci_suite": null,
+  "verification_gaps": [],
+  "runtime_dependencies": [
+    {
+      "id": "runtime:http_service:source-service",
+      "name": "Source service",
+      "kind": "http_service",
+      "repo": "app",
+      "required_for_flow_ids": [],
+      "detected_from": [
+        {
+          "file": ".github/workflows/release.yml",
+          "symbol": "SOURCE_URL",
+          "label": "env_var",
+          "snippet": "SOURCE_URL=\"https://github.com/${OWNER}/Kokoro-FastAPI\""
+        }
+      ],
+      "scope": "repository"
+    }
+  ],
+  "cross_repo_impacts": [],
+  "notes": [
+    "test_execution=skipped reason=--no-run-tests",
+    "Saved change verification artifact: /home/runner/.sydes/workspaces/afe7afa7c247d1a1/artifacts/20260908T193825Z-c4c20a46/change_verification.json"
+  ],
+  "diagnostics": [
+    "code_intelligence_backend=cbm transport=persistent_mcp_stdio cbm_server_version=0.10.8",
+    "cbm_session_start_ms=7441.5 cbm_calls=7 cbm_mean_call_ms=356.1",
+    "cbm_index_ms=2327.1 cbm_query_ms=177.7 sydes_route_semantics_ms=332.0 total_ms=10279.2",
+    "cbm_supplied=symbols,spans,imports,exports,call_edges,usage_edges,entrypoints  sydes_semantics=route_index,route_graph,repo_map",
+    "route_derived_entrypoints_added=0",
+    "cbm_gap: route composition is computed by Sydes, not CBM: CBM reports uncomposed route paths and models no persistence sinks",
+    "cbm_gap: app: route composition is unresolved for some containers; route-derived entrypoint paths from this repo may be incomplete",
+    "cbm_gap: CALLS/USAGE edges deferred: they are fetched as a bounded neighborhood around the changed symbols instead of a repository-wide sweep",
+    "handler_symbol_index: exports=778, files_indexed=77, imports=255, symbols=837",
+    "code_findings_prompt_chars=15855",
+    "pr_semantic_analysis_prompt_chars=8768",
+    "reverse_reach_candidate_files=15",
+    "app: deterministic_routes_found=22, deterministic_frameworks=express_mount_graph",
+    "app: discovery_coverage=moderate score=0.7",
+    "app: discovery_coverage_reasons=deterministic route extraction produced grounded routes; route graph composition produced mounted routes; some mount edges could not be resolved; route composition is unresolved: 5 of 6 route containers have no resolvable mount or declared prefix, so route paths may be incomplete",
+    "app: route_graph_containers=6, route_graph_declarations=22, route_graph_mount_edges=4, route_graph_composed_routes=22, route_graph_unresolved_mounts=4",
+    "app: deterministic_routes=22, llm_routes=7, merged_routes=25, rejected_routes=0, final_routes=25",
+    "app: merged_llm_routes=7",
+    "graph_slice_seeds: changed=4 routes=18 dropped_auxiliary=0 total=22",
+    "graph_slice: used=True seeds=22 canonical_seeds=19 unresolved_seeds=3 unresolved_changed=0 unresolved_auxiliary=3 graph_calls=4 nodes=400 call_edges=505 usage_edges=203 truncated=True fell_back=False",
+    "impact_interpreter: affected_entrypoints=2, ambiguous_edges=0, boundary_budget_exhausted=False, boundary_emitted=2, boundary_expansions=24, boundary_frontier_considered=24, boundary_rejected_weak_evidence=0, call_edges=505, changed_symbols=4, evidence_confirmed=0, guide_actions={'infer_impact': 5, 'trace_callers': 2, 'stop_unresolved': 1}, guide_budget_exhausted=False, guide_calls=8, guide_error_details=[], guide_errors=0, guide_latency_ms=19079.69303700004, guide_no_progress=0, guide_triggered=True, http_entrypoints=2, known_entrypoints=173, llm_candidates=5, llm_candidates_accepted=0, llm_candidates_corroborated=3, llm_candidates_missing_reason=0, llm_candidates_self_referential=0, llm_candidates_uncorroborated=2, llm_candidates_ungrounded=2, llm_candidates_whole_change_unanchored=0, llm_new_entrypoints=0, llm_no_candidate_turns=2, unresolved_after=3, unresolved_before=3, unresolved_symbols=3, usage_edges=203",
+    "repo_profile: rebuilt (4 package(s), 2 framework(s))",
+    "boundary_reasoning: candidates=2 inferred=1",
+    "app: test_files_found=37",
+    "app: test_cases_found=296",
+    "1 contextual files were truncated by bounded read caps.",
+    "test_frameworks_detected=pytest",
+    "ci_suite=disabled"
+  ]
+}

@@ -1,0 +1,340 @@
+{
+  "version": "v3",
+  "kind": "sydes_change_verification",
+  "generated_at": "2026-09-09T00:04:21.112620+00:00",
+  "change": {
+    "base": "21d806098c59a364609b08c02f61ea3c0638ade2",
+    "head": "f6c68ce4eb7e8e9db5f5050aa141ba610c3661eb",
+    "merge_base": "21d806098c59a364609b08c02f61ea3c0638ade2",
+    "repos": [
+      {
+        "name": "app",
+        "root": "/home/runner/work/realworld-axum-sqlx/realworld-axum-sqlx"
+      }
+    ],
+    "includes_working_tree": false,
+    "files": [
+      {
+        "repo": "app",
+        "path": ".github/workflows/sydes.yml",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "unknown",
+        "added_lines": 1,
+        "removed_lines": 0,
+        "hunks": [
+          {
+            "start_line": 21,
+            "end_line": 21
+          }
+        ],
+        "symbols": [],
+        "binary": false
+      },
+      {
+        "repo": "app",
+        "path": "src/http/extractor.rs",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "source_route_candidate",
+        "added_lines": 117,
+        "removed_lines": 1,
+        "hunks": [
+          {
+            "start_line": 17,
+            "end_line": 22
+          },
+          {
+            "start_line": 130,
+            "end_line": 130
+          },
+          {
+            "start_line": 195,
+            "end_line": 304
+          }
+        ],
+        "symbols": [
+          "app:src/http/extractor.rs:auth_header_with_exp",
+          "app:src/http/extractor.rs:test_ctx",
+          "app:src/http/extractor.rs:token_well_past_grace_period_is_rejected",
+          "app:src/http/extractor.rs:token_with_future_exp_is_accepted",
+          "app:src/http/extractor.rs:token_within_grace_period_after_exp_is_accepted",
+          "app:src/http/extractor.rs:AuthUser.from_authorization"
+        ],
+        "binary": false
+      }
+    ],
+    "symbols": [
+      {
+        "id": "app:src/http/extractor.rs:AuthUser.from_authorization",
+        "repo": "app",
+        "file": "src/http/extractor.rs",
+        "name": "from_authorization",
+        "qualified_name": "AuthUser.from_authorization",
+        "cbm_qualified_name": "home-runner-work-realworld-axum-sqlx-realworld-axum-sqlx.src.http.extractor.AuthUser.from_authorization",
+        "kind": "class_method",
+        "language": "rust",
+        "start_line": 64,
+        "end_line": 138,
+        "change_type": "modified",
+        "changed_lines": 1,
+        "decorators": []
+      },
+      {
+        "id": "app:src/http/extractor.rs:test_ctx",
+        "repo": "app",
+        "file": "src/http/extractor.rs",
+        "name": "test_ctx",
+        "qualified_name": "test_ctx",
+        "cbm_qualified_name": "home-runner-work-realworld-axum-sqlx-realworld-axum-sqlx.src.http.extractor.test_ctx",
+        "kind": "function",
+        "language": "rust",
+        "start_line": 231,
+        "end_line": 250,
+        "change_type": "modified",
+        "changed_lines": 20,
+        "decorators": []
+      },
+      {
+        "id": "app:src/http/extractor.rs:auth_header_with_exp",
+        "repo": "app",
+        "file": "src/http/extractor.rs",
+        "name": "auth_header_with_exp",
+        "qualified_name": "auth_header_with_exp",
+        "cbm_qualified_name": "home-runner-work-realworld-axum-sqlx-realworld-axum-sqlx.src.http.extractor.auth_header_with_exp",
+        "kind": "function",
+        "language": "rust",
+        "start_line": 254,
+        "end_line": 271,
+        "change_type": "modified",
+        "changed_lines": 18,
+        "decorators": []
+      },
+      {
+        "id": "app:src/http/extractor.rs:token_with_future_exp_is_accepted",
+        "repo": "app",
+        "file": "src/http/extractor.rs",
+        "name": "token_with_future_exp_is_accepted",
+        "qualified_name": "token_with_future_exp_is_accepted",
+        "cbm_qualified_name": "home-runner-work-realworld-axum-sqlx-realworld-axum-sqlx.src.http.extractor.token_with_future_exp_is_accepted",
+        "kind": "function",
+        "language": "rust",
+        "start_line": 274,
+        "end_line": 281,
+        "change_type": "modified",
+        "changed_lines": 9,
+        "decorators": []
+      },
+      {
+        "id": "app:src/http/extractor.rs:token_within_grace_period_after_exp_is_accepted",
+        "repo": "app",
+        "file": "src/http/extractor.rs",
+        "name": "token_within_grace_period_after_exp_is_accepted",
+        "qualified_name": "token_within_grace_period_after_exp_is_accepted",
+        "cbm_qualified_name": "home-runner-work-realworld-axum-sqlx-realworld-axum-sqlx.src.http.extractor.token_within_grace_period_after_exp_is_accepted",
+        "kind": "function",
+        "language": "rust",
+        "start_line": 284,
+        "end_line": 292,
+        "change_type": "modified",
+        "changed_lines": 10,
+        "decorators": []
+      },
+      {
+        "id": "app:src/http/extractor.rs:token_well_past_grace_period_is_rejected",
+        "repo": "app",
+        "file": "src/http/extractor.rs",
+        "name": "token_well_past_grace_period_is_rejected",
+        "qualified_name": "token_well_past_grace_period_is_rejected",
+        "cbm_qualified_name": "home-runner-work-realworld-axum-sqlx-realworld-axum-sqlx.src.http.extractor.token_well_past_grace_period_is_rejected",
+        "kind": "function",
+        "language": "rust",
+        "start_line": 295,
+        "end_line": 303,
+        "change_type": "modified",
+        "changed_lines": 10,
+        "decorators": []
+      }
+    ],
+    "notes": []
+  },
+  "summary": {
+    "risk": "MEDIUM",
+    "verdict": "VERIFICATION INCOMPLETE",
+    "headline": "6 changed symbol(s); no route flow resolved to them.",
+    "counts": {
+      "changed_files": 2,
+      "changed_source_files": 1,
+      "changed_test_files": 0,
+      "changed_symbols": 6,
+      "affected_flows": 0,
+      "flows_partially_analyzed": 0,
+      "code_findings": 0,
+      "obligations": 0,
+      "obligations_introduced_by_change": 0,
+      "obligations_passed": 0,
+      "obligations_failed": 0,
+      "obligations_unverified": 0,
+      "obligations_unknown": 0,
+      "mapped_tests": 0,
+      "supporting_tests": 0,
+      "tests_executed": 0,
+      "verification_gaps": 0,
+      "runtime_dependencies": 1,
+      "cross_repo_impacts": 0,
+      "impacts_proven": 3,
+      "impacts_inferred": 0,
+      "impacts_not_modeled": 3,
+      "unresolved_changed_symbols": 0
+    },
+    "risk_reasons": [
+      "change could not be tied to any verifiable behavior"
+    ]
+  },
+  "code_review_status": "unavailable",
+  "code_findings": [],
+  "accepted_impacts": [
+    {
+      "id": "impact:app:home-runner-work-realworld-axum-sqlx-realworld-axum-sqlx.src.http.extractor.token_well_past_grace_period_is_rejected",
+      "label": "token_well_past_grace_period_is_rejected",
+      "repo": "app",
+      "kind": "decorated",
+      "status": "proven",
+      "changed_symbols": [
+        "auth_header_with_exp",
+        "from_authorization",
+        "test_ctx",
+        "token_well_past_grace_period_is_rejected"
+      ],
+      "route_method": null,
+      "route_path": null,
+      "llm_confidence": null,
+      "llm_reason": null,
+      "llm_inference_type": null,
+      "llm_uncertainty": null,
+      "corroborated": null,
+      "behavior_label": "",
+      "verification_model_status": "unsupported_or_partial"
+    },
+    {
+      "id": "impact:app:home-runner-work-realworld-axum-sqlx-realworld-axum-sqlx.src.http.extractor.token_with_future_exp_is_accepted",
+      "label": "token_with_future_exp_is_accepted",
+      "repo": "app",
+      "kind": "decorated",
+      "status": "proven",
+      "changed_symbols": [
+        "auth_header_with_exp",
+        "from_authorization",
+        "test_ctx",
+        "token_with_future_exp_is_accepted"
+      ],
+      "route_method": null,
+      "route_path": null,
+      "llm_confidence": null,
+      "llm_reason": null,
+      "llm_inference_type": null,
+      "llm_uncertainty": null,
+      "corroborated": null,
+      "behavior_label": "",
+      "verification_model_status": "unsupported_or_partial"
+    },
+    {
+      "id": "impact:app:home-runner-work-realworld-axum-sqlx-realworld-axum-sqlx.src.http.extractor.token_within_grace_period_after_exp_is_accepted",
+      "label": "token_within_grace_period_after_exp_is_accepted",
+      "repo": "app",
+      "kind": "decorated",
+      "status": "proven",
+      "changed_symbols": [
+        "auth_header_with_exp",
+        "from_authorization",
+        "test_ctx",
+        "token_within_grace_period_after_exp_is_accepted"
+      ],
+      "route_method": null,
+      "route_path": null,
+      "llm_confidence": null,
+      "llm_reason": null,
+      "llm_inference_type": null,
+      "llm_uncertainty": null,
+      "corroborated": null,
+      "behavior_label": "",
+      "verification_model_status": "unsupported_or_partial"
+    }
+  ],
+  "pr_semantic_analysis": null,
+  "affected_boundaries": [],
+  "affected_flows": [],
+  "unresolved_changed_symbols": 0,
+  "analysis_status": "complete",
+  "analysis_notes": [
+    "Code review was requested but its provider call failed; no code findings were produced. Verification is unaffected \u2014 code findings never enter the verdict.",
+    "PR semantic analysis unavailable: OpenAI provider selected, but OPENAI_API_KEY is not set.\n\nSet it with:\n  export OPENAI_API_KEY=...\n\nOr choose another provider, e.g. a local Ollama model:\n  --model ollama:llama3.1:8b",
+    "Structural exploration was bounded for this change (max_depth reached with unexplored frontier); boundaries beyond the explored neighborhood are not established either way.",
+    "AI boundary inference unavailable: OpenAI provider selected, but OPENAI_API_KEY is not set.\n\nSet it with:\n  export OPENAI_API_KEY=...\n\nOr choose another provider, e.g. a local Ollama model:\n  --model ollama:llama3.1:8b",
+    "AI impact inference unavailable: OpenAI provider selected, but OPENAI_API_KEY is not set.\n\nSet it with:\n  export OPENAI_API_KEY=...\n\nOr choose another provider, e.g. a local Ollama model:\n  --model ollama:llama3.1:8b",
+    "Deterministic impact analysis still ran and is reflected below; AI-inferred impact coverage may be incomplete.",
+    "No discovered route declaration reaches the changed symbols."
+  ],
+  "test_executions": [],
+  "ci_suite": null,
+  "verification_gaps": [],
+  "runtime_dependencies": [
+    {
+      "id": "runtime:database:postgresql",
+      "name": "PostgreSQL",
+      "kind": "database",
+      "repo": "app",
+      "required_for_flow_ids": [],
+      "detected_from": [
+        {
+          "file": ".env.sample",
+          "symbol": "DATABASE_URL",
+          "label": "env_var",
+          "snippet": "DATABASE_URL=postgresql://postgres:{password}@localhost/realworld_axum_sqlx"
+        },
+        {
+          "file": ".github/workflows/rust.yml",
+          "symbol": "postgres",
+          "label": "container_image",
+          "snippet": "image: postgres"
+        }
+      ],
+      "scope": "repository"
+    }
+  ],
+  "cross_repo_impacts": [],
+  "notes": [
+    "test_execution=skipped reason=--no-run-tests",
+    "Saved change verification artifact: /home/runner/.sydes/workspaces/afe7afa7c247d1a1/artifacts/20260909T000430Z-25cf72bd/change_verification.json"
+  ],
+  "diagnostics": [
+    "code_intelligence_backend=cbm transport=persistent_mcp_stdio cbm_server_version=0.10.8",
+    "cbm_session_start_ms=7137.0 cbm_calls=7 cbm_mean_call_ms=269.1",
+    "cbm_index_ms=1754.3 cbm_query_ms=131.2 sydes_route_semantics_ms=34.6 total_ms=9057.5",
+    "cbm_supplied=symbols,spans,imports,exports,call_edges,usage_edges,entrypoints  sydes_semantics=route_index,route_graph,repo_map",
+    "route_derived_entrypoints_added=0",
+    "cbm_gap: route composition is computed by Sydes, not CBM: CBM reports uncomposed route paths and models no persistence sinks",
+    "cbm_gap: CALLS/USAGE edges deferred: they are fetched as a bounded neighborhood around the changed symbols instead of a repository-wide sweep",
+    "cbm_gap: 11 query row(s) did not match the expected column arity and were dropped rather than mis-parsed",
+    "handler_symbol_index: exports=52, files_indexed=11, imports=14, symbols=52",
+    "code_review_unavailable: OpenAI provider selected, but OPENAI_API_KEY is not set.\n\nSet it with:\n  export OPENAI_API_KEY=...\n\nOr choose another provider, e.g. a local Ollama model:\n  --model ollama:llama3.1:8b",
+    "pr_semantic_analysis unavailable: OpenAI provider selected, but OPENAI_API_KEY is not set.\n\nSet it with:\n  export OPENAI_API_KEY=...\n\nOr choose another provider, e.g. a local Ollama model:\n  --model ollama:llama3.1:8b",
+    "reverse_reach_candidate_files=3",
+    "app: deterministic_routes_found=0, deterministic_frameworks=none",
+    "app: discovery_coverage=unknown score=0.2",
+    "app: discovery_coverage_reasons=insufficient route index/graph signals",
+    "app: route_graph_containers=1, route_graph_declarations=0, route_graph_mount_edges=0, route_graph_composed_routes=0, route_graph_unresolved_mounts=0",
+    "app: deterministic_routes=0, llm_routes=0, merged_routes=0, rejected_routes=0, final_routes=0",
+    "app: merged_llm_routes=0",
+    "graph_slice_seeds: changed=6 routes=0 dropped_auxiliary=0 total=6",
+    "graph_slice: used=True seeds=6 canonical_seeds=6 unresolved_seeds=0 unresolved_changed=0 unresolved_auxiliary=0 graph_calls=4 nodes=53 call_edges=12 usage_edges=97 truncated=True fell_back=False",
+    "impact_guide unavailable: OpenAI provider selected, but OPENAI_API_KEY is not set.\n\nSet it with:\n  export OPENAI_API_KEY=...\n\nOr choose another provider, e.g. a local Ollama model:\n  --model ollama:llama3.1:8b",
+    "impact_interpreter: affected_entrypoints=3, ambiguous_edges=0, boundary_budget_exhausted=False, boundary_emitted=0, boundary_expansions=8, boundary_frontier_considered=8, boundary_rejected_weak_evidence=0, call_edges=12, changed_symbols=6, evidence_confirmed=0, guide_actions={}, guide_budget_exhausted=False, guide_calls=0, guide_error_details=[], guide_errors=0, guide_latency_ms=0.0, guide_no_progress=0, guide_triggered=False, http_entrypoints=0, known_entrypoints=5, llm_candidates=0, llm_candidates_accepted=0, llm_candidates_corroborated=0, llm_candidates_missing_reason=0, llm_candidates_self_referential=0, llm_candidates_uncorroborated=0, llm_candidates_ungrounded=0, llm_candidates_whole_change_unanchored=0, llm_new_entrypoints=0, llm_no_candidate_turns=0, unresolved_after=0, unresolved_before=0, unresolved_symbols=0, usage_edges=97",
+    "repo_profile: rebuilt (1 package(s), 1 framework(s))",
+    "boundary_reasoning unavailable: OpenAI provider selected, but OPENAI_API_KEY is not set.\n\nSet it with:\n  export OPENAI_API_KEY=...\n\nOr choose another provider, e.g. a local Ollama model:\n  --model ollama:llama3.1:8b",
+    "app: test_files_found=0",
+    "app: test_cases_found=0",
+    "test_frameworks_detected=none",
+    "ci_suite=disabled"
+  ]
+}

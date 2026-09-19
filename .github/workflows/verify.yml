@@ -1,0 +1,258 @@
+name: Sydes verify (reusable)
+
+# Central, versionable implementation of the Sydes PR-verification integration.
+# Individual example repositories call this instead of each carrying their own
+# copy of the workflow steps and renderer script. See ../../CONTRACT.md in
+# this repository for the frozen v1 artifact/presentation contract this
+# workflow implements.
+#
+# Called from a repository's own `pull_request`-triggered workflow, e.g.:
+#
+#   jobs:
+#     sydes:
+#       uses: sydes-examples/sydes-action/.github/workflows/verify.yml@main
+#       with:
+#         repo_alias: app
+#       secrets:
+#         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+#
+# The caller keeps its own `on: pull_request` trigger, permissions, and
+# concurrency group; this workflow inherits the same `github.event` context
+# because reusable-workflow jobs run within the caller's workflow run.
+
+on:
+  workflow_call:
+    inputs:
+      model:
+        description: Model spec passed to `sydes verify-change --model`.
+        type: string
+        default: "openai:gpt-4.1-mini"
+      repo_alias:
+        description: Name Sydes uses for the checked-out repo (`--repo <alias>=.`).
+        type: string
+        default: "app"
+      sydes_ref:
+        description: >-
+          Exact `sydes` PyPI version to pin (passed to `pip install
+          sydes==<value>`), e.g. "0.2.1". Leave unset (the default) for
+          the normal, public install contract: `pip install --upgrade
+          sydes`, the same command any user runs, always resolving to
+          the newest stable release. Only set this for benchmark/research
+          reproducibility, where a specific version needs to be recorded
+          and pinned deliberately.
+        type: string
+        default: ""
+      renderer_ref:
+        description: Git ref of this repository to pull the renderer script from.
+        type: string
+        default: "main"
+      recovery_route_context:
+        description: >-
+          Pass `--recovery-route-context` to `sydes verify-change` (see
+          that flag's own help for what it does). Off by default —
+          existing callers see no behavior change.
+        type: boolean
+        default: false
+      recovery_graph_path_search:
+        description: >-
+          Pass `--recovery-graph-path-search` to `sydes verify-change`
+          (see that flag's own help for what it does). Off by default —
+          existing callers see no behavior change.
+        type: boolean
+        default: false
+      run_tests:
+        description: >-
+          When true, omit `--no-run-tests` so `sydes verify-change`
+          actually executes the repository's relevant test(s) (or, when
+          none of the mapped tests can be invoked individually, the whole
+          detected test command) and attributes pass/fail per obligation.
+          Off by default — existing callers see no behavior change; the
+          checked-out repository must already be able to install/run its
+          own test suite in this job's environment.
+        type: boolean
+        default: false
+      node_version:
+        description: >-
+          Node.js version for `actions/setup-node`, only used when
+          `run_tests` is true and the repository has a package.json. A
+          caller whose native dependencies predate modern Node/V8 (e.g. an
+          old `bcrypt`/`nan` build) can pin an older runtime here instead
+          of the default.
+        type: string
+        default: "20"
+    secrets:
+      OPENAI_API_KEY:
+        description: OpenAI key for `sydes verify-change`'s LLM calls.
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  verify-change:
+    name: Sydes verify-change
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # workflow_call jobs run inside the caller's workflow run, so this groups
+    # correctly per-PR even though the group name is defined here.
+    concurrency:
+      group: sydes-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+
+    steps:
+      # Full history: Sydes resolves the change with `git merge-base <base> HEAD`,
+      # so both the PR head and the PR base commit must be present locally.
+      - name: Check out PR head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # Only when a caller actually asked to execute tests (`run_tests`,
+      # default off) -- installing a Node toolchain/dependencies for every
+      # analysis-only run would be pure overhead, and most callers never
+      # need it. Generic across any Node repo, not this one specifically:
+      # `--legacy-peer-deps` is a common, non-repo-specific npm
+      # compatibility flag for older dependency trees, not an Express- or
+      # routing-controllers-specific accommodation.
+      - name: Set up Node
+        if: inputs.run_tests && hashFiles('package.json') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+
+      - name: Install repository dependencies
+        if: inputs.run_tests && hashFiles('package.json') != ''
+        run: npm install --legacy-peer-deps
+
+      - name: Install Sydes
+        run: |
+          python -m pip install --upgrade pip
+          if [ -n "${{ inputs.sydes_ref }}" ]; then
+            python -m pip install "sydes==${{ inputs.sydes_ref }}"
+          else
+            python -m pip install --upgrade sydes
+          fi
+          sydes --version
+
+      - name: Run Sydes verify-change
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # The impact guide requires the Codebase Memory backend; the default
+          # backend is `native`, which would silently skip semantic inference.
+          SYDES_CODE_INTELLIGENCE: cbm
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          REPO_ALIAS: ${{ inputs.repo_alias }}
+          MODEL: ${{ inputs.model }}
+        run: |
+          EXTRA_FLAGS=()
+          if [ "${{ inputs.recovery_route_context }}" = "true" ]; then
+            EXTRA_FLAGS+=(--recovery-route-context)
+          fi
+          if [ "${{ inputs.recovery_graph_path_search }}" = "true" ]; then
+            EXTRA_FLAGS+=(--recovery-graph-path-search)
+          fi
+          if [ "${{ inputs.run_tests }}" != "true" ]; then
+            EXTRA_FLAGS+=(--no-run-tests)
+          fi
+          sydes verify-change \
+            --base "$BASE_SHA" \
+            --repo "${REPO_ALIAS}=." \
+            --llm-policy auto \
+            --impact-guide auto \
+            --code-review \
+            --model "$MODEL" \
+            --verbose \
+            "${EXTRA_FLAGS[@]}" \
+            --json sydes-result.json
+
+      # A separate, pinned checkout of the renderer — it lives here, not in
+      # the repository under test. Deliberately checked out AFTER "Run Sydes
+      # verify-change", not before: this directory used to be checked out
+      # first, directly inside the same working tree `--repo app=.` points
+      # Sydes at, and Sydes correctly scoped its scan to that whole tree --
+      # including this directory. On a real PR that put one of this
+      # checkout's own test files (`_sydes-integration/scripts/tests/
+      # test_render_sydes_pr.py`) in front of Sydes' test-mapping pass, which
+      # matched it as "evidence" for an app route purely because a string in
+      # one of its fixtures happened to overlap the route's path -- a false,
+      # cross-repository attribution with nothing to do with the PR under
+      # test. Checking this out only once analysis is already done removes
+      # it from the tree Sydes ever sees, with no change to Sydes itself.
+      - name: Check out Sydes integration scripts
+        if: always()
+        uses: actions/checkout@v5
+        with:
+          repository: sydes-examples/sydes-action
+          ref: ${{ inputs.renderer_ref }}
+          path: _sydes-integration
+          sparse-checkout: |
+            scripts
+
+      # Rendering runs even when the analysis step failed, so the PR still
+      # gets an explanation instead of silence.
+      - name: Render Sydes summary
+        if: always()
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python _sydes-integration/scripts/render_sydes_pr.py sydes-result.json \
+            --out sydes-comment.md \
+            --diagnostics-out sydes-diagnostics.json \
+            --run-url "$RUN_URL"
+          cat sydes-comment.md >> "$GITHUB_STEP_SUMMARY"
+          echo "Wrote $(wc -c < sydes-comment.md) bytes to the job summary."
+
+      - name: Post or update Sydes PR comment
+        if: always()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- sydes-verification-comment -->';
+            const body = fs.readFileSync('sydes-comment.md', 'utf8');
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner, repo, issue_number, per_page: 100 },
+            );
+            const existing = comments.find(
+              (comment) => comment.body && comment.body.includes(marker),
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment(
+                { owner, repo, comment_id: existing.id, body },
+              );
+              core.info(`Updated Sydes comment ${existing.id}`);
+            } else {
+              const created = await github.rest.issues.createComment(
+                { owner, repo, issue_number, body },
+              );
+              core.info(`Created Sydes comment ${created.data.id}`);
+            }
+
+      - name: Upload Sydes result
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: sydes-result
+          # sydes-result.ai_recovery.json only exists when AI recovery
+          # actually ran and the CLI wrote its sidecar (--json's stem +
+          # .ai_recovery.json) -- if-no-files-found: warn means its
+          # absence (recovery off, not triggered, or unresolved) never
+          # fails this step, it just isn't in the artifact that run.
+          path: |
+            sydes-result.json
+            sydes-result.ai_recovery.json
+            sydes-comment.md
+            sydes-diagnostics.json
+          if-no-files-found: warn

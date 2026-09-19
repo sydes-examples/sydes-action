@@ -1,0 +1,589 @@
+{
+  "version": "v3",
+  "kind": "sydes_change_verification",
+  "generated_at": "2026-09-08T19:36:44.501241+00:00",
+  "change": {
+    "base": "67ccf46a9bb3366ab95c1ebf07b8f02f93b3b563",
+    "head": "941588956b101665ad35d711ecc1da54a13a7a6c",
+    "merge_base": "67ccf46a9bb3366ab95c1ebf07b8f02f93b3b563",
+    "repos": [
+      {
+        "name": "app",
+        "root": "/home/runner/work/simplebank/simplebank"
+      }
+    ],
+    "includes_working_tree": false,
+    "files": [
+      {
+        "repo": "app",
+        "path": ".github/workflows/sydes.yml",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "unknown",
+        "added_lines": 1,
+        "removed_lines": 0,
+        "hunks": [
+          {
+            "start_line": 21,
+            "end_line": 21
+          }
+        ],
+        "symbols": [],
+        "binary": false
+      },
+      {
+        "repo": "app",
+        "path": "db/sqlc/tx_create_user.go",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "source_route_candidate",
+        "added_lines": 15,
+        "removed_lines": 1,
+        "hunks": [
+          {
+            "start_line": 12,
+            "end_line": 18
+          },
+          {
+            "start_line": 32,
+            "end_line": 39
+          }
+        ],
+        "symbols": [
+          "app:db/sqlc/tx_create_user.go:SQLStore.CreateUserTx"
+        ],
+        "binary": false
+      },
+      {
+        "repo": "app",
+        "path": "gapi/rpc_create_user.go",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "source_route_candidate",
+        "added_lines": 10,
+        "removed_lines": 0,
+        "hunks": [
+          {
+            "start_line": 8,
+            "end_line": 8
+          },
+          {
+            "start_line": 59,
+            "end_line": 67
+          }
+        ],
+        "symbols": [
+          "app:gapi/rpc_create_user.go:Server.CreateUser"
+        ],
+        "binary": false
+      },
+      {
+        "repo": "app",
+        "path": "gapi/rpc_create_user_test.go",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "test_usage_candidate",
+        "added_lines": 47,
+        "removed_lines": 0,
+        "hunks": [
+          {
+            "start_line": 6,
+            "end_line": 6
+          },
+          {
+            "start_line": 169,
+            "end_line": 214
+          }
+        ],
+        "symbols": [
+          "app:gapi/rpc_create_user_test.go:TestCreateUserAPI"
+        ],
+        "binary": false
+      }
+    ],
+    "symbols": [
+      {
+        "id": "app:db/sqlc/tx_create_user.go:SQLStore.CreateUserTx",
+        "repo": "app",
+        "file": "db/sqlc/tx_create_user.go",
+        "name": "CreateUserTx",
+        "qualified_name": "SQLStore.CreateUserTx",
+        "cbm_qualified_name": "home-runner-work-simplebank-simplebank.db.sqlc.CreateUserTx",
+        "kind": "class_method",
+        "language": "go",
+        "start_line": 21,
+        "end_line": 43,
+        "change_type": "modified",
+        "changed_lines": 8,
+        "decorators": []
+      },
+      {
+        "id": "app:gapi/rpc_create_user.go:Server.CreateUser",
+        "repo": "app",
+        "file": "gapi/rpc_create_user.go",
+        "name": "CreateUser",
+        "qualified_name": "Server.CreateUser",
+        "cbm_qualified_name": "home-runner-work-simplebank-simplebank.gapi.CreateUser",
+        "kind": "class_method",
+        "language": "go",
+        "start_line": 19,
+        "end_line": 72,
+        "change_type": "modified",
+        "changed_lines": 9,
+        "decorators": []
+      },
+      {
+        "id": "app:gapi/rpc_create_user_test.go:TestCreateUserAPI",
+        "repo": "app",
+        "file": "gapi/rpc_create_user_test.go",
+        "name": "TestCreateUserAPI",
+        "qualified_name": "TestCreateUserAPI",
+        "cbm_qualified_name": "home-runner-work-simplebank-simplebank.gapi.TestCreateUserAPI",
+        "kind": "function",
+        "language": "go",
+        "start_line": 72,
+        "end_line": 260,
+        "change_type": "modified",
+        "changed_lines": 46,
+        "decorators": []
+      }
+    ],
+    "notes": []
+  },
+  "summary": {
+    "risk": "MEDIUM",
+    "verdict": "VERIFICATION INCOMPLETE",
+    "headline": "1 obligation(s) across 1 flow(s): 0 passed, 0 failed, 1 unverified, 0 unknown",
+    "counts": {
+      "changed_files": 4,
+      "changed_source_files": 2,
+      "changed_test_files": 1,
+      "changed_symbols": 3,
+      "affected_flows": 1,
+      "flows_partially_analyzed": 1,
+      "code_findings": 0,
+      "obligations": 1,
+      "obligations_introduced_by_change": 0,
+      "obligations_passed": 0,
+      "obligations_failed": 0,
+      "obligations_unverified": 1,
+      "obligations_unknown": 0,
+      "mapped_tests": 0,
+      "supporting_tests": 2,
+      "tests_executed": 0,
+      "verification_gaps": 0,
+      "runtime_dependencies": 2,
+      "cross_repo_impacts": 0,
+      "impacts_proven": 0,
+      "impacts_inferred": 3,
+      "impacts_not_modeled": 2,
+      "unresolved_changed_symbols": 3
+    },
+    "risk_reasons": [
+      "1 obligation(s) have no verifying test",
+      "1 flow(s) only partially analyzed \u2014 absence of downstream effects is not established"
+    ]
+  },
+  "code_review_status": "completed",
+  "code_findings": [],
+  "accepted_impacts": [
+    {
+      "id": "flow:POST:/users",
+      "label": "POST /users",
+      "repo": "app",
+      "kind": "http_route",
+      "status": "inferred",
+      "changed_symbols": [
+        "(whole change)",
+        "CreateUser",
+        "CreateUserTx",
+        "TestCreateUserAPI"
+      ],
+      "route_method": "POST",
+      "route_path": "/users",
+      "llm_confidence": 0.85,
+      "llm_reason": "The CreateUserTx now separates AfterCreate task enqueueing errors from the user creation transaction, allowing a user to be created even if the verification email task fails, changing the observable behavior of user creation via POST /users by no longer rolling back on AfterCreate errors.",
+      "llm_inference_type": "semantic_pr_wide_theme",
+      "llm_uncertainty": "the absence of full call graph details and exact transactional boundaries",
+      "corroborated": true,
+      "behavior_label": "POST /users",
+      "verification_model_status": "modeled"
+    },
+    {
+      "id": "impact:app:CreateUser",
+      "label": "POST /users user creation API endpoint",
+      "repo": "app",
+      "kind": "unknown",
+      "status": "inferred",
+      "changed_symbols": [
+        "TestCreateUserAPI"
+      ],
+      "route_method": null,
+      "route_path": null,
+      "llm_confidence": 0.85,
+      "llm_reason": "Changes to TestCreateUserAPI along with CreateUser and CreateUserTx suggest user creation behavior tested may affect the POST /users API's observable behavior",
+      "llm_inference_type": "semantic_pr_wide_theme",
+      "llm_uncertainty": "the graph may be missing some routes or caller relations",
+      "corroborated": false,
+      "behavior_label": "POST /users user creation API endpoint",
+      "verification_model_status": "unsupported_or_partial"
+    },
+    {
+      "id": "impact:app:CreateUserTx",
+      "label": "POST /users user creation process",
+      "repo": "app",
+      "kind": "unknown",
+      "status": "inferred",
+      "changed_symbols": [
+        "CreateUserTx",
+        "TestCreateUserAPI"
+      ],
+      "route_method": null,
+      "route_path": null,
+      "llm_confidence": 0.9,
+      "llm_reason": "CreateUserTx runs a user creation transaction where AfterCreate errors do not roll back the transaction, so POST /users may now succeed in creating users despite side effect failures like verify-email queue unavailability",
+      "llm_inference_type": "semantic_indirect_dependency",
+      "llm_uncertainty": "requires confirmation of POST /users usage of CreateUserTx and impact of AfterCreate error handling",
+      "corroborated": false,
+      "behavior_label": "POST /users user creation process",
+      "verification_model_status": "unsupported_or_partial"
+    }
+  ],
+  "pr_semantic_analysis": {
+    "origin": "llm_hypothesis",
+    "change_summary": "The user creation flow was changed so that errors occurring in the post-creation step (specifically, the AfterCreate callback which enqueues a verify-email task) no longer cause the overall user creation transaction to roll back. Instead, the user row is committed regardless, and any AfterCreate error is captured separately and surfaced as a logged warning without failing the CreateUser API call.",
+    "behavior_changes": [
+      {
+        "description": "User creation now commits the user record even if the AfterCreate step (enqueuing verify-email tasks) fails. Such failures are logged but do not cause the CreateUser API to fail.",
+        "changed_symbols": [
+          "SQLStore.CreateUserTx",
+          "Server.CreateUser",
+          "TestCreateUserAPI"
+        ],
+        "evidence": [
+          "In CreateUserTx, the AfterCreate error is assigned to AfterCreateErr in the result and not returned to avoid rolling back the transaction.",
+          "In Server.CreateUser, AfterCreateErr is logged as a warning but does not cause the API call to fail.",
+          "The test case TaskDistributionFails asserts that even on distribution failure, user creation succeeds without error."
+        ],
+        "confidence": 1.0
+      }
+    ],
+    "important_symbols": [
+      {
+        "repo": "app",
+        "file": "db/sqlc/tx_create_user.go",
+        "symbol": "SQLStore.CreateUserTx",
+        "reason": "Core transaction method modified to decouple AfterCreate errors from transaction rollback behavior."
+      },
+      {
+        "repo": "app",
+        "file": "gapi/rpc_create_user.go",
+        "symbol": "Server.CreateUser",
+        "reason": "API layer that surfaces the decoupled post-creation error as a logged warning without failing the request."
+      },
+      {
+        "repo": "app",
+        "file": "gapi/rpc_create_user_test.go",
+        "symbol": "TestCreateUserAPI",
+        "reason": "Test coverage added to explicitly verify that user creation succeeds despite AfterCreate failures."
+      }
+    ],
+    "investigation_hints": [
+      {
+        "description": "Examine transaction boundaries in user creation and ensure AfterCreate logic is correctly isolated to avoid transaction rollback.",
+        "related_symbols": [
+          "SQLStore.CreateUserTx"
+        ],
+        "concepts": [
+          "transaction management",
+          "post-transaction hooks",
+          "error handling",
+          "task distribution"
+        ],
+        "likely_boundary_types": [
+          "callable",
+          "async"
+        ]
+      },
+      {
+        "description": "Investigate API boundary behavior to ensure proper error visibility and logging without degrading API responsiveness.",
+        "related_symbols": [
+          "Server.CreateUser"
+        ],
+        "concepts": [
+          "API error handling",
+          "logging",
+          "side-effect failures"
+        ],
+        "likely_boundary_types": [
+          "api"
+        ]
+      }
+    ],
+    "likely_boundary_types": [
+      "callable",
+      "api",
+      "async"
+    ],
+    "local_risks": [
+      "Potential silent loss or delayed recovery from AfterCreate failures since errors do not block user creation.",
+      "Invariants assuming AfterCreate always succeeds may be violated (e.g., users expected to receive verification emails immediately).",
+      "Logging is the only notification on AfterCreate failure; if logs are missed, failure may go unnoticed.",
+      "Test mocks (particularly for AfterCreate and task distribution) must accurately simulate failure modes to avoid false confidence."
+    ],
+    "uncertainties": [
+      "Whether callers or downstream systems depend on AfterCreate success synchronously\u2014this is not evident from the diff.",
+      "Effects on user experience from delayed or missing verification emails due to failed AfterCreate tasks are not shown.",
+      "Whether any retries or compensating workflows exist for AfterCreate failures is unknown from the supplied context.",
+      "Extent to which the logging approach fits broader monitoring and alerting policies cannot be established here."
+    ]
+  },
+  "affected_boundaries": [
+    {
+      "id": "boundary:inferred:api:app:createUser:0",
+      "kind": "api",
+      "subtype": "http",
+      "repo": "app",
+      "file": "api/server.go",
+      "symbol": "createUser",
+      "label": "CreateUser HTTP API handler",
+      "changed_symbols": [
+        "Server.CreateUser",
+        "SQLStore.CreateUserTx"
+      ],
+      "evidence": [
+        "The boundary candidate 'createUser' in 'api/server.go' is identified as 'reached_entrypoint:http_route' with detail 'POST /users'.",
+        "Changed symbol 'Server.CreateUser' in 'gapi/rpc_create_user.go' corresponds to the API handler method.",
+        "Changed symbol 'SQLStore.CreateUserTx' in 'db/sqlc/tx_create_user.go' is the method committing the user creation transaction.",
+        "The accepted impact list includes 'POST /users', 'CreateUser', and 'CreateUserTx' as inferred affected behaviors."
+      ],
+      "distance": 0,
+      "evidence_strength": "medium",
+      "status": "inferred",
+      "reason": "The change affects the user creation flow initiated by the POST /users HTTP route entrypoint, specifically the Server.CreateUser method handling that request and the transaction method SQLStore.CreateUserTx that commits the user record independently of after-create task errors.",
+      "uncertainty": "Unclear whether synchronous dependencies on AfterCreate success or downstream effects on user experience exist, as the evidence does not reveal whether the API caller or other systems depend on the after-create task's completion or success.",
+      "llm_confidence": 0.9
+    }
+  ],
+  "affected_flows": [
+    {
+      "id": "flow:POST:/users",
+      "entry_kind": "route",
+      "entry_label": "POST /users",
+      "repo": "app",
+      "method": "POST",
+      "path": "/users",
+      "handler": "server",
+      "changed_nodes": [
+        {
+          "repo": "app",
+          "file": "db/sqlc/tx_create_user.go",
+          "symbol": "SQLStore.CreateUserTx",
+          "line": 21
+        },
+        {
+          "repo": "app",
+          "file": "gapi/rpc_create_user.go",
+          "symbol": "Server.CreateUser",
+          "line": 19
+        },
+        {
+          "repo": "app",
+          "file": "gapi/rpc_create_user_test.go",
+          "symbol": "TestCreateUserAPI",
+          "line": 72
+        }
+      ],
+      "analysis_status": "partial",
+      "status": "unverified",
+      "impact_status": "inferred",
+      "obligations": [
+        {
+          "id": "flow:POST:/users::obligation-1",
+          "flow_id": "flow:POST:/users",
+          "kind": "route_contract",
+          "statement": "POST /users responds 201 \u2014 Default 201 response skeleton.",
+          "origin": "api_contract",
+          "introduced_by_change": false,
+          "required": true,
+          "status": "unverified",
+          "reason": "2 test(s) exercise this flow but none assert this behavior"
+        },
+        {
+          "id": "flow:POST:/users::obligation-2",
+          "flow_id": "flow:POST:/users",
+          "kind": "route_contract",
+          "statement": "contract happy path",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unverified",
+          "reason": "2 test(s) exercise this flow but none assert this behavior"
+        },
+        {
+          "id": "flow:POST:/users::obligation-6",
+          "flow_id": "flow:POST:/users",
+          "kind": "route_contract",
+          "statement": "validates response body shape matches contract",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unverified",
+          "reason": "2 test(s) exercise this flow but none assert this behavior"
+        },
+        {
+          "id": "flow:POST:/users::obligation-7",
+          "flow_id": "flow:POST:/users",
+          "kind": "route_contract",
+          "statement": "verifies POST /users handles database commit failures safely",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unverified",
+          "reason": "2 test(s) exercise this flow but none assert this behavior"
+        },
+        {
+          "id": "flow:POST:/users::obligation-8",
+          "flow_id": "flow:POST:/users",
+          "kind": "route_contract",
+          "statement": "verifies POST /users handles database write failures safely",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unverified",
+          "reason": "2 test(s) exercise this flow but none assert this behavior"
+        },
+        {
+          "id": "flow:POST:/users::obligation-9",
+          "flow_id": "flow:POST:/users",
+          "kind": "side_effect",
+          "statement": "POST /users accessed ctx.JSON(http.StatusBadRequest, errorResponse(err)) return } hashedPassword, err := util.HashPassword(req.Password) i...",
+          "origin": "trace_sink",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unverified",
+          "reason": "2 test(s) exercise this flow but none assert this behavior"
+        },
+        {
+          "id": "flow:POST:/users::obligation-5",
+          "flow_id": "flow:POST:/users",
+          "kind": "validation",
+          "statement": "malformed JSON validation",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unverified",
+          "reason": "2 test(s) exercise this flow but none assert this behavior"
+        },
+        {
+          "id": "flow:POST:/users::obligation-4",
+          "flow_id": "flow:POST:/users",
+          "kind": "validation",
+          "statement": "verifies POST /users rejects invalid payloads",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unverified",
+          "reason": "2 test(s) exercise this flow but none assert this behavior"
+        },
+        {
+          "id": "flow:POST:/users::obligation-3",
+          "flow_id": "flow:POST:/users",
+          "kind": "validation",
+          "statement": "verifies POST /users rejects missing required fields",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unverified",
+          "reason": "2 test(s) exercise this flow but none assert this behavior"
+        }
+      ]
+    }
+  ],
+  "unresolved_changed_symbols": 3,
+  "analysis_status": "partial",
+  "analysis_notes": [
+    "Route composition is unresolved in this repository; some routes may be missing.",
+    "Structural exploration was bounded for this change (max_depth reached with unexplored frontier); boundaries beyond the explored neighborhood are not established either way.",
+    "3 changed symbol(s) have no established impact path to any entrypoint (an AI-inferred candidate may still exist for one \u2014 see AFFECTED BEHAVIOR \u2014 but that is not the same as resolved impact coverage)."
+  ],
+  "test_executions": [],
+  "ci_suite": null,
+  "verification_gaps": [],
+  "runtime_dependencies": [
+    {
+      "id": "runtime:database:postgresql",
+      "name": "PostgreSQL",
+      "kind": "database",
+      "repo": "app",
+      "required_for_flow_ids": [
+        "flow:POST:/users"
+      ],
+      "detected_from": [
+        {
+          "file": ".github/workflows/test.yml",
+          "symbol": "postgres:14-alpine",
+          "label": "container_image",
+          "snippet": "image: postgres:14-alpine"
+        },
+        {
+          "file": "docker-compose.yaml",
+          "symbol": "postgres:14-alpine",
+          "label": "container_image",
+          "snippet": "image: postgres:14-alpine"
+        }
+      ],
+      "scope": "affected_flow"
+    },
+    {
+      "id": "runtime:cache:redis",
+      "name": "Redis",
+      "kind": "cache",
+      "repo": "app",
+      "required_for_flow_ids": [],
+      "detected_from": [
+        {
+          "file": "docker-compose.yaml",
+          "symbol": "redis:7-alpine",
+          "label": "container_image",
+          "snippet": "image: redis:7-alpine"
+        }
+      ],
+      "scope": "repository"
+    }
+  ],
+  "cross_repo_impacts": [],
+  "notes": [
+    "test_execution=skipped reason=--no-run-tests",
+    "Saved change verification artifact: /home/runner/.sydes/workspaces/afe7afa7c247d1a1/artifacts/20260908T193743Z-920fbdde/change_verification.json"
+  ],
+  "diagnostics": [
+    "code_intelligence_backend=cbm transport=persistent_mcp_stdio cbm_server_version=0.10.8",
+    "cbm_session_start_ms=8469.5 cbm_calls=7 cbm_mean_call_ms=302.5",
+    "cbm_index_ms=1975.8 cbm_query_ms=146.5 sydes_route_semantics_ms=51.5 total_ms=10644.2",
+    "cbm_supplied=symbols,spans,imports,exports,call_edges,usage_edges,entrypoints  sydes_semantics=route_index,route_graph,repo_map",
+    "route_derived_entrypoints_added=7",
+    "cbm_gap: route composition is computed by Sydes, not CBM: CBM reports uncomposed route paths and models no persistence sinks",
+    "cbm_gap: app: route composition is unresolved for some containers; route-derived entrypoint paths from this repo may be incomplete",
+    "cbm_gap: CALLS/USAGE edges deferred: they are fetched as a bounded neighborhood around the changed symbols instead of a repository-wide sweep",
+    "handler_symbol_index: exports=259, files_indexed=88, imports=132, symbols=313",
+    "code_findings_prompt_chars=16286",
+    "pr_semantic_analysis_prompt_chars=9065",
+    "reverse_reach_candidate_files=4",
+    "app: deterministic_routes_found=7, deterministic_frameworks=express,express_mount_graph",
+    "app: discovery_coverage=moderate score=0.7",
+    "app: discovery_coverage_reasons=deterministic route extraction produced grounded routes; route graph composition produced mounted routes; some mount edges could not be resolved; route composition is unresolved: 2 of 2 route containers have no resolvable mount or declared prefix, so route paths may be incomplete",
+    "app: route_graph_containers=4, route_graph_declarations=7, route_graph_mount_edges=3, route_graph_composed_routes=7, route_graph_unresolved_mounts=2",
+    "app: deterministic_routes=7, llm_routes=7, merged_routes=7, rejected_routes=0, final_routes=7",
+    "app: merged_llm_routes=7",
+    "graph_slice_seeds: changed=3 routes=0 dropped_auxiliary=0 total=3",
+    "graph_slice: used=True seeds=3 canonical_seeds=3 unresolved_seeds=0 unresolved_changed=0 unresolved_auxiliary=0 graph_calls=4 nodes=182 call_edges=112 usage_edges=236 truncated=True fell_back=False",
+    "impact_interpreter: affected_entrypoints=3, ambiguous_edges=0, boundary_budget_exhausted=False, boundary_emitted=0, boundary_expansions=3, boundary_frontier_considered=3, boundary_rejected_weak_evidence=0, call_edges=112, changed_symbols=3, evidence_confirmed=0, guide_actions={'infer_impact': 7, 'stop_unresolved': 1}, guide_budget_exhausted=False, guide_calls=8, guide_error_details=[], guide_errors=0, guide_latency_ms=20277.740057000003, guide_no_progress=1, guide_triggered=True, http_entrypoints=1, known_entrypoints=7, llm_candidates=9, llm_candidates_accepted=9, llm_candidates_corroborated=5, llm_candidates_missing_reason=0, llm_candidates_self_referential=0, llm_candidates_uncorroborated=4, llm_candidates_ungrounded=0, llm_candidates_whole_change_unanchored=0, llm_new_entrypoints=3, llm_no_candidate_turns=0, unresolved_after=3, unresolved_before=3, unresolved_symbols=3, usage_edges=236",
+    "repo_profile: rebuilt (1 package(s), 2 framework(s))",
+    "boundary_reasoning: candidates=4 inferred=1",
+    "app: test_files_found=18",
+    "app: test_cases_found=40",
+    "test_frameworks_detected=go_test",
+    "ci_suite=disabled"
+  ]
+}

@@ -1,0 +1,642 @@
+{
+  "version": "v3",
+  "kind": "sydes_change_verification",
+  "generated_at": "2026-09-08T19:37:50.124122+00:00",
+  "change": {
+    "base": "42b46d04687ae9bd640622099b719402f364dc77",
+    "head": "cdaba629610d93210d9c3ab93b6fce6e027f996e",
+    "merge_base": "42b46d04687ae9bd640622099b719402f364dc77",
+    "repos": [
+      {
+        "name": "app",
+        "root": "/home/runner/work/domain-driven-hexagon/domain-driven-hexagon"
+      }
+    ],
+    "includes_working_tree": false,
+    "files": [
+      {
+        "repo": "app",
+        "path": ".github/workflows/sydes.yml",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "unknown",
+        "added_lines": 1,
+        "removed_lines": 0,
+        "hunks": [
+          {
+            "start_line": 21,
+            "end_line": 21
+          }
+        ],
+        "symbols": [],
+        "binary": false
+      },
+      {
+        "repo": "app",
+        "path": "src/libs/exceptions/exception.codes.ts",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "source_route_candidate",
+        "added_lines": 1,
+        "removed_lines": 0,
+        "hunks": [
+          {
+            "start_line": 15,
+            "end_line": 15
+          }
+        ],
+        "symbols": [],
+        "binary": false
+      },
+      {
+        "repo": "app",
+        "path": "src/libs/exceptions/exceptions.ts",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "source_route_candidate",
+        "added_lines": 19,
+        "removed_lines": 0,
+        "hunks": [
+          {
+            "start_line": 6,
+            "end_line": 6
+          },
+          {
+            "start_line": 69,
+            "end_line": 86
+          }
+        ],
+        "symbols": [
+          "app:src/libs/exceptions/exceptions.ts:ForbiddenException.constructor"
+        ],
+        "binary": false
+      },
+      {
+        "repo": "app",
+        "path": "src/modules/user/commands/delete-user/delete-user.http-controller.ts",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "source_route_candidate",
+        "added_lines": 10,
+        "removed_lines": 2,
+        "hunks": [
+          {
+            "start_line": 4,
+            "end_line": 4
+          },
+          {
+            "start_line": 13,
+            "end_line": 13
+          },
+          {
+            "start_line": 31,
+            "end_line": 35
+          },
+          {
+            "start_line": 39,
+            "end_line": 39
+          },
+          {
+            "start_line": 47,
+            "end_line": 48
+          }
+        ],
+        "symbols": [
+          "app:src/modules/user/commands/delete-user/delete-user.http-controller.ts:DeleteUserHttpController.deleteUser"
+        ],
+        "binary": false
+      },
+      {
+        "repo": "app",
+        "path": "src/modules/user/commands/delete-user/delete-user.service.ts",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "source_route_candidate",
+        "added_lines": 10,
+        "removed_lines": 2,
+        "hunks": [
+          {
+            "start_line": 1,
+            "end_line": 1
+          },
+          {
+            "start_line": 3,
+            "end_line": 3
+          },
+          {
+            "start_line": 26,
+            "end_line": 26
+          },
+          {
+            "start_line": 30,
+            "end_line": 36
+          }
+        ],
+        "symbols": [
+          "app:src/modules/user/commands/delete-user/delete-user.service.ts:DeleteUserService.execute"
+        ],
+        "binary": false
+      },
+      {
+        "repo": "app",
+        "path": "tests/user/delete-user/delete-user.e2e-spec.ts",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "test_usage_candidate",
+        "added_lines": 31,
+        "removed_lines": 1,
+        "hunks": [
+          {
+            "start_line": 3,
+            "end_line": 3
+          },
+          {
+            "start_line": 7,
+            "end_line": 10
+          },
+          {
+            "start_line": 17,
+            "end_line": 17
+          },
+          {
+            "start_line": 54,
+            "end_line": 78
+          }
+        ],
+        "symbols": [],
+        "binary": false
+      },
+      {
+        "repo": "app",
+        "path": "tests/user/delete-user/delete-user.feature",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "test_usage_candidate",
+        "added_lines": 5,
+        "removed_lines": 0,
+        "hunks": [
+          {
+            "start_line": 12,
+            "end_line": 16
+          }
+        ],
+        "symbols": [],
+        "binary": false
+      }
+    ],
+    "symbols": [
+      {
+        "id": "app:src/libs/exceptions/exceptions.ts:ForbiddenException.constructor",
+        "repo": "app",
+        "file": "src/libs/exceptions/exceptions.ts",
+        "name": "constructor",
+        "qualified_name": "ForbiddenException.constructor",
+        "cbm_qualified_name": "home-runner-work-domain-driven-hexagon-domain-driven-hexagon.src.libs.exceptions.exceptions.ForbiddenException.constructor",
+        "kind": "class_method",
+        "language": "typescript",
+        "start_line": 80,
+        "end_line": 82,
+        "change_type": "modified",
+        "changed_lines": 3,
+        "decorators": []
+      },
+      {
+        "id": "app:src/modules/user/commands/delete-user/delete-user.http-controller.ts:DeleteUserHttpController.deleteUser",
+        "repo": "app",
+        "file": "src/modules/user/commands/delete-user/delete-user.http-controller.ts",
+        "name": "deleteUser",
+        "qualified_name": "DeleteUserHttpController.deleteUser",
+        "cbm_qualified_name": "home-runner-work-domain-driven-hexagon-domain-driven-hexagon.src.modules.user.commands.delete-user.delete-user.http-controller.DeleteUserHttpController.deleteUser",
+        "kind": "class_method",
+        "language": "typescript",
+        "start_line": 37,
+        "end_line": 52,
+        "change_type": "modified",
+        "changed_lines": 3,
+        "decorators": []
+      },
+      {
+        "id": "app:src/modules/user/commands/delete-user/delete-user.service.ts:DeleteUserService.execute",
+        "repo": "app",
+        "file": "src/modules/user/commands/delete-user/delete-user.service.ts",
+        "name": "execute",
+        "qualified_name": "DeleteUserService.execute",
+        "cbm_qualified_name": "home-runner-work-domain-driven-hexagon-domain-driven-hexagon.src.modules.user.commands.delete-user.delete-user.service.DeleteUserService.execute",
+        "kind": "class_method",
+        "language": "typescript",
+        "start_line": 24,
+        "end_line": 40,
+        "change_type": "modified",
+        "changed_lines": 8,
+        "decorators": []
+      }
+    ],
+    "notes": []
+  },
+  "summary": {
+    "risk": "HIGH",
+    "verdict": "VERIFICATION INCOMPLETE",
+    "headline": "3 obligation(s) across 1 flow(s): 0 passed, 0 failed, 3 unverified, 0 unknown",
+    "counts": {
+      "changed_files": 7,
+      "changed_source_files": 4,
+      "changed_test_files": 2,
+      "changed_symbols": 3,
+      "affected_flows": 1,
+      "flows_partially_analyzed": 0,
+      "code_findings": 0,
+      "obligations": 3,
+      "obligations_introduced_by_change": 2,
+      "obligations_passed": 0,
+      "obligations_failed": 0,
+      "obligations_unverified": 3,
+      "obligations_unknown": 0,
+      "mapped_tests": 0,
+      "supporting_tests": 12,
+      "tests_executed": 0,
+      "verification_gaps": 0,
+      "runtime_dependencies": 1,
+      "cross_repo_impacts": 0,
+      "impacts_proven": 1,
+      "impacts_inferred": 1,
+      "impacts_not_modeled": 1,
+      "unresolved_changed_symbols": 1
+    },
+    "risk_reasons": [
+      "3 obligation(s) have no verifying test"
+    ]
+  },
+  "code_review_status": "completed",
+  "code_findings": [],
+  "accepted_impacts": [
+    {
+      "id": "flow:DELETE:/",
+      "label": "DELETE /",
+      "repo": "app",
+      "kind": "http_route",
+      "status": "proven",
+      "changed_symbols": [
+        "constructor",
+        "deleteUser"
+      ],
+      "route_method": "DELETE",
+      "route_path": "/",
+      "llm_confidence": null,
+      "llm_reason": null,
+      "llm_inference_type": null,
+      "llm_uncertainty": null,
+      "corroborated": null,
+      "behavior_label": "",
+      "verification_model_status": "modeled"
+    },
+    {
+      "id": "impact:app:execute",
+      "label": "User deletion via HTTP API",
+      "repo": "app",
+      "kind": "unknown",
+      "status": "inferred",
+      "changed_symbols": [
+        "execute"
+      ],
+      "route_method": null,
+      "route_path": null,
+      "llm_confidence": 0.85,
+      "llm_reason": "DeleteUserService.execute implements logic that determines whether a user can be deleted, including protection for admin users; changes here directly affect the behavior seen by callers such as DeleteUserHttpController.deleteUser which exposes user deletion via the API",
+      "llm_inference_type": "semantic_direct_dependency",
+      "llm_uncertainty": "no additional call graph beyond the known HTTP controller exposure",
+      "corroborated": false,
+      "behavior_label": "User deletion via HTTP API",
+      "verification_model_status": "unsupported_or_partial"
+    }
+  ],
+  "pr_semantic_analysis": {
+    "origin": "llm_hypothesis",
+    "change_summary": "Deletion of users now explicitly prevents deleting users with the admin role by returning a Forbidden error; the HTTP controller correctly maps this forbidden condition to a 403 response, and corresponding end-to-end tests verify that protected admin users cannot be deleted.",
+    "behavior_changes": [
+      {
+        "description": "Deleting a user with an admin role is now disallowed and results in a Forbidden error instead of a success or not found error.",
+        "changed_symbols": [
+          "DeleteUserService.execute",
+          "ForbiddenException",
+          "DeleteUserHttpController.deleteUser"
+        ],
+        "evidence": [
+          "DeleteUserService.execute checks if the found user has the admin role and returns Err(new ForbiddenException('Cannot delete a protected user')) if so.",
+          "A new ForbiddenException class was added to represent a business rule forbidding the operation.",
+          "DeleteUserHttpController.deleteUser was modified to handle ForbiddenException by throwing a 403 Forbidden HTTP exception.",
+          "The end-to-end test delete-user.e2e-spec.ts added a scenario ensuring that deleting a protected admin user results in a 403 Forbidden error."
+        ],
+        "confidence": 1.0
+      }
+    ],
+    "important_symbols": [
+      {
+        "repo": "app",
+        "file": "src/modules/user/commands/delete-user/delete-user.service.ts",
+        "symbol": "DeleteUserService.execute",
+        "reason": "This method implements the core business rule change preventing deletion of admin users by returning a ForbiddenException."
+      },
+      {
+        "repo": "app",
+        "file": "src/modules/user/commands/delete-user/delete-user.http-controller.ts",
+        "symbol": "DeleteUserHttpController.deleteUser",
+        "reason": "This method translates the ForbiddenException into an HTTP 403 response to the client."
+      },
+      {
+        "repo": "app",
+        "file": "src/libs/exceptions/exceptions.ts",
+        "symbol": "ForbiddenException.constructor",
+        "reason": "Defines the new exception representing a forbidden action due to business rules."
+      }
+    ],
+    "investigation_hints": [
+      {
+        "description": "Verify that roles management and user deletion boundaries properly enforce that admin users cannot be deleted.",
+        "related_symbols": [
+          "DeleteUserService.execute",
+          "ForbiddenException",
+          "UserRoles"
+        ],
+        "concepts": [
+          "authorization",
+          "business rules enforcement",
+          "user role protections"
+        ],
+        "likely_boundary_types": [
+          "callable",
+          "api"
+        ]
+      },
+      {
+        "description": "Check the HTTP API layer to confirm proper mapping and handling of new ForbiddenException to HTTP 403 responses.",
+        "related_symbols": [
+          "DeleteUserHttpController.deleteUser"
+        ],
+        "concepts": [
+          "HTTP error mapping",
+          "API error response consistency"
+        ],
+        "likely_boundary_types": [
+          "api"
+        ]
+      }
+    ],
+    "likely_boundary_types": [
+      "api",
+      "callable"
+    ],
+    "local_risks": [
+      "Reliance on user role string comparison (user.role === UserRoles.admin) assumes roles are accurate at runtime and consistent across the system.",
+      "Potential for future exceptions related to user deletion that are not mapped explicitly to HTTP status codes, leading to generic errors.",
+      "Ensuring that all callers of DeleteUserService.execute handle the new ForbiddenException error path properly."
+    ],
+    "uncertainties": [
+      "Whether other user roles exist that should also be protected from deletion is unknown from this diff alone.",
+      "Whether other flows or APIs allow deleting protected users is uncertain and requires broader structural investigation.",
+      "The exact persistence model and transactional consistency when user deletion is blocked by a forbidden check is not shown.",
+      "How this ForbiddenException interacts with broader authorization or permissions systems beyond the simple business rule is not evident."
+    ]
+  },
+  "affected_boundaries": [
+    {
+      "id": "boundary:api:app:DeleteUserHttpController.deleteUser:src/modules/user/commands/delete-user/delete-user.http-controller.ts",
+      "kind": "api",
+      "subtype": "route_registration",
+      "repo": "app",
+      "file": "src/modules/user/commands/delete-user/delete-user.http-controller.ts",
+      "symbol": "deleteUser",
+      "label": "DeleteUserHttpController.deleteUser",
+      "changed_symbols": [
+        "deleteUser"
+      ],
+      "evidence": [],
+      "distance": 0,
+      "evidence_strength": "strong",
+      "status": "proven",
+      "reason": null,
+      "uncertainty": null,
+      "llm_confidence": null
+    },
+    {
+      "id": "boundary:inferred:callable:app:DeleteUserService.execute:0",
+      "kind": "callable",
+      "subtype": "service",
+      "repo": "app",
+      "file": "src/modules/user/commands/delete-user/delete-user.service.ts",
+      "symbol": "DeleteUserService.execute",
+      "label": "User deletion business rule enforcement service",
+      "changed_symbols": [
+        "DeleteUserService.execute"
+      ],
+      "evidence": [
+        "changed_symbols includes DeleteUserService.execute in src/modules/user/commands/delete-user/delete-user.service.ts",
+        "The change summary states the service now returns Forbidden error when attempting to delete admin users",
+        "accepted_impacts marks 'execute' as inferred impact symbol representing a callable entrypoint"
+      ],
+      "distance": 0,
+      "evidence_strength": "medium",
+      "status": "inferred",
+      "reason": "The DeleteUserService.execute method enforces the business rule preventing deletion of admin users by returning a Forbidden exception, representing a service layer enforcing domain logic.",
+      "uncertainty": "It is unclear whether DeleteUserService.execute is the sole service responsible for this logic or if other flows also enforce or bypass this rule.",
+      "llm_confidence": 0.9
+    }
+  ],
+  "affected_flows": [
+    {
+      "id": "flow:DELETE:/",
+      "entry_kind": "route",
+      "entry_label": "DELETE /",
+      "repo": "app",
+      "method": "DELETE",
+      "path": "/",
+      "handler": "deleteUser",
+      "changed_nodes": [
+        {
+          "repo": "app",
+          "file": "src/libs/exceptions/exceptions.ts",
+          "symbol": "ForbiddenException.constructor",
+          "line": 80
+        },
+        {
+          "repo": "app",
+          "file": "src/modules/user/commands/delete-user/delete-user.http-controller.ts",
+          "symbol": "DeleteUserHttpController.deleteUser",
+          "line": 37
+        },
+        {
+          "repo": "app",
+          "file": "src/modules/user/commands/delete-user/delete-user.service.ts",
+          "symbol": "DeleteUserService.execute",
+          "line": 24
+        }
+      ],
+      "analysis_status": "complete",
+      "status": "unverified",
+      "impact_status": "proven",
+      "obligations": [
+        {
+          "id": "flow:DELETE:/::obligation-1",
+          "flow_id": "flow:DELETE:/",
+          "kind": "route_contract",
+          "statement": "DELETE / responds 204 \u2014 Default 204 response skeleton.",
+          "origin": "api_contract",
+          "introduced_by_change": true,
+          "required": true,
+          "status": "unverified",
+          "reason": "4 test(s) exercise this flow but none assert this behavior"
+        },
+        {
+          "id": "flow:DELETE:/::obligation-6",
+          "flow_id": "flow:DELETE:/",
+          "kind": "validation",
+          "statement": "DELETE / enforces `match(result, { Ok: (isOk: boolean) => isOk, Err: (error: Error) => { if (error instanceof NotFoundException) throw new NotFoundHttpException(error.message); if (error instanceof ForbiddenException...`",
+          "origin": "trace_step",
+          "introduced_by_change": true,
+          "required": true,
+          "status": "unverified",
+          "reason": "4 test(s) exercise this flow but none assert this behavior"
+        },
+        {
+          "id": "flow:DELETE:/::obligation-2",
+          "flow_id": "flow:DELETE:/",
+          "kind": "route_contract",
+          "statement": "contract happy path",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:DELETE:/::obligation-3",
+          "flow_id": "flow:DELETE:/",
+          "kind": "route_contract",
+          "statement": "validates response body shape matches contract",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:DELETE:/::obligation-4",
+          "flow_id": "flow:DELETE:/",
+          "kind": "route_contract",
+          "statement": "verifies DELETE / handles database write failures safely",
+          "origin": "test_matrix",
+          "introduced_by_change": false,
+          "required": false,
+          "status": "unknown",
+          "reason": "Test execution was disabled (--no-run-tests)"
+        },
+        {
+          "id": "flow:DELETE:/::obligation-5",
+          "flow_id": "flow:DELETE:/",
+          "kind": "side_effect",
+          "statement": "DELETE / accessed const result: Result<boolean, NotFoundException | ForbiddenException> = await this.commandBus.execute(command);",
+          "origin": "trace_sink",
+          "introduced_by_change": false,
+          "required": true,
+          "status": "unverified",
+          "reason": "4 test(s) exercise this flow but none assert this behavior"
+        }
+      ]
+    }
+  ],
+  "unresolved_changed_symbols": 1,
+  "analysis_status": "partial",
+  "analysis_notes": [
+    "Changed source file `src/libs/exceptions/exception.codes.ts` yielded no symbols: file was not indexed by the shared symbol index. Downstream effects of this file are not established.",
+    "Route composition is unresolved in this repository; some routes may be missing.",
+    "Structural exploration was bounded for this change (max_depth reached with unexplored frontier); boundaries beyond the explored neighborhood are not established either way.",
+    "1 changed symbol(s) have no established impact path to any entrypoint (an AI-inferred candidate may still exist for one \u2014 see AFFECTED BEHAVIOR \u2014 but that is not the same as resolved impact coverage)."
+  ],
+  "test_executions": [],
+  "ci_suite": null,
+  "verification_gaps": [],
+  "runtime_dependencies": [
+    {
+      "id": "runtime:database:postgresql",
+      "name": "PostgreSQL",
+      "kind": "database",
+      "repo": "app",
+      "required_for_flow_ids": [
+        "flow:DELETE:/"
+      ],
+      "detected_from": [
+        {
+          "file": "docker/docker-compose.yml",
+          "symbol": "postgres:alpine",
+          "label": "container_image",
+          "snippet": "image: postgres:alpine"
+        },
+        {
+          "file": ".env.example",
+          "symbol": "DB_HOST",
+          "label": "env_var",
+          "snippet": "DB_HOST='localhost'"
+        },
+        {
+          "file": ".env.example",
+          "symbol": "DB_PORT",
+          "label": "env_var",
+          "snippet": "DB_PORT=5432"
+        },
+        {
+          "file": ".env.example",
+          "symbol": "DB_NAME",
+          "label": "env_var",
+          "snippet": "DB_NAME='ddh'"
+        },
+        {
+          "file": ".env.test",
+          "symbol": "DB_HOST",
+          "label": "env_var",
+          "snippet": "DB_HOST='localhost'"
+        },
+        {
+          "file": ".env.test",
+          "symbol": "DB_PORT",
+          "label": "env_var",
+          "snippet": "DB_PORT=5432"
+        }
+      ],
+      "scope": "affected_flow"
+    }
+  ],
+  "cross_repo_impacts": [],
+  "notes": [
+    "test_execution=skipped reason=--no-run-tests",
+    "Saved change verification artifact: /home/runner/.sydes/workspaces/afe7afa7c247d1a1/artifacts/20260908T193826Z-10d91b7e/change_verification.json"
+  ],
+  "diagnostics": [
+    "code_intelligence_backend=cbm transport=persistent_mcp_stdio cbm_server_version=0.10.8",
+    "cbm_session_start_ms=7667.3 cbm_calls=7 cbm_mean_call_ms=288.0",
+    "cbm_index_ms=1877.1 cbm_query_ms=142.9 sydes_route_semantics_ms=135.2 total_ms=9823.4",
+    "cbm_supplied=symbols,spans,imports,exports,call_edges,usage_edges,entrypoints  sydes_semantics=route_index,route_graph,repo_map",
+    "route_derived_entrypoints_added=0",
+    "cbm_gap: route composition is computed by Sydes, not CBM: CBM reports uncomposed route paths and models no persistence sinks",
+    "cbm_gap: app: route composition is unresolved for some containers; route-derived entrypoint paths from this repo may be incomplete",
+    "cbm_gap: CALLS/USAGE edges deferred: they are fetched as a bounded neighborhood around the changed symbols instead of a repository-wide sweep",
+    "handler_symbol_index: exports=208, files_indexed=77, imports=114, symbols=208",
+    "code_findings_prompt_chars=18474",
+    "pr_semantic_analysis_prompt_chars=12363",
+    "reverse_reach_candidate_files=8",
+    "app: deterministic_routes_found=3, deterministic_frameworks=express_mount_graph,ts_decorators",
+    "app: discovery_coverage=moderate score=0.7",
+    "app: discovery_coverage_reasons=deterministic route extraction produced grounded routes; route graph composition produced mounted routes; route composition is unresolved: 3 of 3 route containers have no resolvable mount or declared prefix, so route paths may be incomplete; many route-like signals but relatively few final deterministic routes",
+    "app: route_graph_containers=4, route_graph_declarations=3, route_graph_mount_edges=0, route_graph_composed_routes=3, route_graph_unresolved_mounts=0",
+    "app: selected_files: src/configs/app.routes.ts(source_route_candidate), src/modules/wallet/application/event-handlers/create-wallet-when-user-is-created.domain-event-handler.ts(source_route_candidate), src/libs/api/api-error.response.ts(source_route_candidate), src/libs/api/graphql/paginated.graphql-response.base.ts(source_route_candidate), src/libs/api/id.response.dto.ts(source_route_candidate)",
+    "app: deterministic_routes=3, llm_routes=0, merged_routes=3, rejected_routes=0, final_routes=3",
+    "app: merged_llm_routes=0",
+    "graph_slice_seeds: changed=3 routes=0 dropped_auxiliary=0 total=3",
+    "graph_slice: used=True seeds=3 canonical_seeds=5 unresolved_seeds=0 unresolved_changed=0 unresolved_auxiliary=0 graph_calls=4 nodes=17 call_edges=3 usage_edges=19 truncated=True fell_back=False",
+    "impact_interpreter: affected_entrypoints=2, ambiguous_edges=0, boundary_budget_exhausted=False, boundary_emitted=1, boundary_expansions=3, boundary_frontier_considered=3, boundary_rejected_weak_evidence=0, call_edges=3, changed_symbols=3, evidence_confirmed=0, guide_actions={'infer_impact': 3, 'trace_callers': 1}, guide_budget_exhausted=False, guide_calls=4, guide_error_details=[], guide_errors=0, guide_latency_ms=8783.87262400001, guide_no_progress=0, guide_triggered=True, http_entrypoints=0, known_entrypoints=8, llm_candidates=3, llm_candidates_accepted=2, llm_candidates_corroborated=1, llm_candidates_missing_reason=0, llm_candidates_self_referential=0, llm_candidates_uncorroborated=2, llm_candidates_ungrounded=0, llm_candidates_whole_change_unanchored=0, llm_new_entrypoints=1, llm_no_candidate_turns=0, unresolved_after=1, unresolved_before=1, unresolved_symbols=1, usage_edges=19",
+    "repo_profile: rebuilt (1 package(s), 1 framework(s))",
+    "boundary_reasoning: candidates=2 inferred=1",
+    "app: test_files_found=10",
+    "app: test_cases_found=12",
+    "test_frameworks_detected=jest",
+    "ci_suite=disabled"
+  ]
+}

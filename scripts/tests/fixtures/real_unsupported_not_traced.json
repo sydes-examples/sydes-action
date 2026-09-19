@@ -1,0 +1,401 @@
+{
+  "version": "v3",
+  "kind": "sydes_change_verification",
+  "generated_at": "2026-09-09T00:04:13.748445+00:00",
+  "change": {
+    "base": "67ccf46a9bb3366ab95c1ebf07b8f02f93b3b563",
+    "head": "c79fa45539edbaec1adb04907356e5588f2b2453",
+    "merge_base": "67ccf46a9bb3366ab95c1ebf07b8f02f93b3b563",
+    "repos": [
+      {
+        "name": "app",
+        "root": "/home/runner/work/simplebank/simplebank"
+      }
+    ],
+    "includes_working_tree": false,
+    "files": [
+      {
+        "repo": "app",
+        "path": ".github/workflows/sydes.yml",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "unknown",
+        "added_lines": 1,
+        "removed_lines": 0,
+        "hunks": [
+          {
+            "start_line": 21,
+            "end_line": 21
+          }
+        ],
+        "symbols": [],
+        "binary": false
+      },
+      {
+        "repo": "app",
+        "path": "worker/task_send_verify_email.go",
+        "old_path": null,
+        "change_type": "modified",
+        "role": "source_route_candidate",
+        "added_lines": 6,
+        "removed_lines": 0,
+        "hunks": [
+          {
+            "start_line": 52,
+            "end_line": 57
+          }
+        ],
+        "symbols": [
+          "app:worker/task_send_verify_email.go:RedisTaskProcessor.ProcessTaskSendVerifyEmail"
+        ],
+        "binary": false
+      },
+      {
+        "repo": "app",
+        "path": "worker/task_send_verify_email_test.go",
+        "old_path": null,
+        "change_type": "added",
+        "role": "test_usage_candidate",
+        "added_lines": 135,
+        "removed_lines": 0,
+        "hunks": [
+          {
+            "start_line": 1,
+            "end_line": 135
+          }
+        ],
+        "symbols": [
+          "app:worker/task_send_verify_email_test.go:TestProcessTaskSendVerifyEmail",
+          "app:worker/task_send_verify_email_test.go:newSendVerifyEmailTask",
+          "app:worker/task_send_verify_email_test.go:newTestRedisTaskProcessor",
+          "app:worker/task_send_verify_email_test.go:randomVerifyEmailUser",
+          "app:worker/task_send_verify_email_test.go:mockEmailSender.SendEmail"
+        ],
+        "binary": false
+      }
+    ],
+    "symbols": [
+      {
+        "id": "app:worker/task_send_verify_email.go:RedisTaskProcessor.ProcessTaskSendVerifyEmail",
+        "repo": "app",
+        "file": "worker/task_send_verify_email.go",
+        "name": "ProcessTaskSendVerifyEmail",
+        "qualified_name": "RedisTaskProcessor.ProcessTaskSendVerifyEmail",
+        "cbm_qualified_name": "home-runner-work-simplebank-simplebank.worker.ProcessTaskSendVerifyEmail",
+        "kind": "class_method",
+        "language": "go",
+        "start_line": 41,
+        "end_line": 85,
+        "change_type": "modified",
+        "changed_lines": 6,
+        "decorators": []
+      },
+      {
+        "id": "app:worker/task_send_verify_email_test.go:mockEmailSender.SendEmail",
+        "repo": "app",
+        "file": "worker/task_send_verify_email_test.go",
+        "name": "SendEmail",
+        "qualified_name": "mockEmailSender.SendEmail",
+        "cbm_qualified_name": "home-runner-work-simplebank-simplebank.worker.SendEmail",
+        "kind": "class_method",
+        "language": "go",
+        "start_line": 25,
+        "end_line": 35,
+        "change_type": "added",
+        "changed_lines": 11,
+        "decorators": []
+      },
+      {
+        "id": "app:worker/task_send_verify_email_test.go:newTestRedisTaskProcessor",
+        "repo": "app",
+        "file": "worker/task_send_verify_email_test.go",
+        "name": "newTestRedisTaskProcessor",
+        "qualified_name": "newTestRedisTaskProcessor",
+        "cbm_qualified_name": "home-runner-work-simplebank-simplebank.worker.newTestRedisTaskProcessor",
+        "kind": "function",
+        "language": "go",
+        "start_line": 43,
+        "end_line": 48,
+        "change_type": "added",
+        "changed_lines": 6,
+        "decorators": []
+      },
+      {
+        "id": "app:worker/task_send_verify_email_test.go:randomVerifyEmailUser",
+        "repo": "app",
+        "file": "worker/task_send_verify_email_test.go",
+        "name": "randomVerifyEmailUser",
+        "qualified_name": "randomVerifyEmailUser",
+        "cbm_qualified_name": "home-runner-work-simplebank-simplebank.worker.randomVerifyEmailUser",
+        "kind": "function",
+        "language": "go",
+        "start_line": 50,
+        "end_line": 64,
+        "change_type": "added",
+        "changed_lines": 15,
+        "decorators": []
+      },
+      {
+        "id": "app:worker/task_send_verify_email_test.go:newSendVerifyEmailTask",
+        "repo": "app",
+        "file": "worker/task_send_verify_email_test.go",
+        "name": "newSendVerifyEmailTask",
+        "qualified_name": "newSendVerifyEmailTask",
+        "cbm_qualified_name": "home-runner-work-simplebank-simplebank.worker.newSendVerifyEmailTask",
+        "kind": "function",
+        "language": "go",
+        "start_line": 66,
+        "end_line": 70,
+        "change_type": "added",
+        "changed_lines": 5,
+        "decorators": []
+      },
+      {
+        "id": "app:worker/task_send_verify_email_test.go:TestProcessTaskSendVerifyEmail",
+        "repo": "app",
+        "file": "worker/task_send_verify_email_test.go",
+        "name": "TestProcessTaskSendVerifyEmail",
+        "qualified_name": "TestProcessTaskSendVerifyEmail",
+        "cbm_qualified_name": "home-runner-work-simplebank-simplebank.worker.TestProcessTaskSendVerifyEmail",
+        "kind": "function",
+        "language": "go",
+        "start_line": 72,
+        "end_line": 135,
+        "change_type": "added",
+        "changed_lines": 64,
+        "decorators": []
+      }
+    ],
+    "notes": []
+  },
+  "summary": {
+    "risk": "MEDIUM",
+    "verdict": "VERIFICATION INCOMPLETE",
+    "headline": "6 changed symbol(s); no route flow resolved to them.",
+    "counts": {
+      "changed_files": 3,
+      "changed_source_files": 1,
+      "changed_test_files": 1,
+      "changed_symbols": 6,
+      "affected_flows": 0,
+      "flows_partially_analyzed": 0,
+      "code_findings": 0,
+      "obligations": 0,
+      "obligations_introduced_by_change": 0,
+      "obligations_passed": 0,
+      "obligations_failed": 0,
+      "obligations_unverified": 0,
+      "obligations_unknown": 0,
+      "mapped_tests": 0,
+      "supporting_tests": 0,
+      "tests_executed": 0,
+      "verification_gaps": 0,
+      "runtime_dependencies": 2,
+      "cross_repo_impacts": 0,
+      "impacts_proven": 0,
+      "impacts_inferred": 1,
+      "impacts_not_modeled": 1,
+      "unresolved_changed_symbols": 6
+    },
+    "risk_reasons": [
+      "change could not be tied to any verifiable behavior"
+    ]
+  },
+  "code_review_status": "completed",
+  "code_findings": [],
+  "accepted_impacts": [
+    {
+      "id": "impact:app:ProcessTaskSendVerifyEmail",
+      "label": "email verification task processing for users",
+      "repo": "app",
+      "kind": "unknown",
+      "status": "inferred",
+      "changed_symbols": [
+        "ProcessTaskSendVerifyEmail",
+        "SendEmail"
+      ],
+      "route_method": null,
+      "route_path": null,
+      "llm_confidence": 0.85,
+      "llm_reason": "The changed symbol directly handles sending verification emails and now may alter when or how verification emails are created and triggered for users, affecting the processing of email verification tasks.",
+      "llm_inference_type": "semantic_direct_dependency",
+      "llm_uncertainty": "behavioral specifics of email sending logic and downstream effects on user verification flows",
+      "corroborated": false,
+      "behavior_label": "email verification task processing for users",
+      "verification_model_status": "unsupported_or_partial"
+    }
+  ],
+  "pr_semantic_analysis": {
+    "origin": "llm_hypothesis",
+    "change_summary": "The task processor for sending email verification now first checks if the user's email is already verified before proceeding. If the email is verified, the task is skipped without creating a new verification record or sending an email.",
+    "behavior_changes": [
+      {
+        "description": "Email verification tasks for users who already have a verified email address no longer create verification records or send verification emails; the processing is short-circuited and the task completes successfully with a logged info message.",
+        "changed_symbols": [
+          "RedisTaskProcessor.ProcessTaskSendVerifyEmail"
+        ],
+        "evidence": [
+          "In worker/task_send_verify_email.go, a new if-check was added to ProcessTaskSendVerifyEmail that returns early if user.IsEmailVerified is true.",
+          "The early return is logged indicating the verification email task was skipped.",
+          "The associated test TestProcessTaskSendVerifyEmail with sub-test \"AlreadyVerified\" verifies this behavior by mocking the store and mailer to expect no creation or sending calls."
+        ],
+        "confidence": 1.0
+      }
+    ],
+    "important_symbols": [
+      {
+        "repo": "app",
+        "file": "worker/task_send_verify_email.go",
+        "symbol": "RedisTaskProcessor.ProcessTaskSendVerifyEmail",
+        "reason": "This method implements the core behavior change related to skip processing for already verified emails."
+      },
+      {
+        "repo": "app",
+        "file": "worker/task_send_verify_email_test.go",
+        "symbol": "TestProcessTaskSendVerifyEmail",
+        "reason": "This test validates the changed behavior, confirming no database creation or email sending occurs when email already verified."
+      }
+    ],
+    "investigation_hints": [
+      {
+        "description": "Verify how clients or the task scheduling system handle skipped verification tasks and if any downstream systems expect verification emails to be sent unconditionally.",
+        "related_symbols": [
+          "RedisTaskProcessor.ProcessTaskSendVerifyEmail"
+        ],
+        "concepts": [
+          "task queue processing",
+          "email verification lifecycle",
+          "idempotency of task processing"
+        ],
+        "likely_boundary_types": [
+          "async",
+          "external"
+        ]
+      }
+    ],
+    "likely_boundary_types": [
+      "async",
+      "external"
+    ],
+    "local_risks": [
+      "Skipping the creation of verification records or sending emails for already verified users is safe only if no workflow depends on re-sending verification emails.",
+      "The new code assumes the user object correctly indicates verified status and that no database inconsistencies will cause false negatives.",
+      "Logs must be monitored to ensure skipped tasks are intentional and not hiding errors such as stale user state."
+    ],
+    "uncertainties": [
+      "Whether any callers or systems downstream expect a verification email to be sent regardless of user state is not evident from the diff.",
+      "Whether this impacts retry logic or visibility into verification attempts in operational dashboards is not visible here.",
+      "The exact lifecycle and timing of verification tasks in the broader system, including scheduling and retries, cannot be determined from this diff.",
+      "Any additional side effects triggered by verification email sending beyond database creation and mailer interaction are unknown."
+    ]
+  },
+  "affected_boundaries": [
+    {
+      "id": "boundary:inferred:async:app:RedisTaskProcessor.ProcessTaskSendVerifyEmail:0",
+      "kind": "async",
+      "subtype": "queue_consumer",
+      "repo": "app",
+      "file": "worker/task_send_verify_email.go",
+      "symbol": "RedisTaskProcessor.ProcessTaskSendVerifyEmail",
+      "label": "Email verification task processing",
+      "changed_symbols": [
+        "RedisTaskProcessor.ProcessTaskSendVerifyEmail"
+      ],
+      "evidence": [
+        "Changed symbol RedisTaskProcessor.ProcessTaskSendVerifyEmail is described as a task processor method in worker/task_send_verify_email.go handling email verification tasks."
+      ],
+      "distance": 0,
+      "evidence_strength": "medium",
+      "status": "inferred",
+      "reason": "The changed method processes an asynchronous task related to sending verification emails and includes logic to short-circuit processing when the email is already verified, indicating it is an async task handler boundary.",
+      "uncertainty": "It is unclear how the task processor is invoked or scheduled, whether the task is placed on a queue or how task lifecycle is managed; also unknown is whether any other async events or retries are affected, or if downstream systems rely on task completion behavior beyond skipping sending email.",
+      "llm_confidence": 0.9
+    }
+  ],
+  "affected_flows": [],
+  "unresolved_changed_symbols": 6,
+  "analysis_status": "partial",
+  "analysis_notes": [
+    "Route composition is unresolved in this repository; some routes may be missing.",
+    "Structural exploration was bounded for this change (max_depth reached with unexplored frontier); boundaries beyond the explored neighborhood are not established either way.",
+    "6 changed symbol(s) have no established impact path to any entrypoint (an AI-inferred candidate may still exist for one \u2014 see AFFECTED BEHAVIOR \u2014 but that is not the same as resolved impact coverage).",
+    "No discovered route declaration reaches the changed symbols."
+  ],
+  "test_executions": [],
+  "ci_suite": null,
+  "verification_gaps": [],
+  "runtime_dependencies": [
+    {
+      "id": "runtime:database:postgresql",
+      "name": "PostgreSQL",
+      "kind": "database",
+      "repo": "app",
+      "required_for_flow_ids": [],
+      "detected_from": [
+        {
+          "file": ".github/workflows/test.yml",
+          "symbol": "postgres:14-alpine",
+          "label": "container_image",
+          "snippet": "image: postgres:14-alpine"
+        },
+        {
+          "file": "docker-compose.yaml",
+          "symbol": "postgres:14-alpine",
+          "label": "container_image",
+          "snippet": "image: postgres:14-alpine"
+        }
+      ],
+      "scope": "repository"
+    },
+    {
+      "id": "runtime:cache:redis",
+      "name": "Redis",
+      "kind": "cache",
+      "repo": "app",
+      "required_for_flow_ids": [],
+      "detected_from": [
+        {
+          "file": "docker-compose.yaml",
+          "symbol": "redis:7-alpine",
+          "label": "container_image",
+          "snippet": "image: redis:7-alpine"
+        }
+      ],
+      "scope": "repository"
+    }
+  ],
+  "cross_repo_impacts": [],
+  "notes": [
+    "test_execution=skipped reason=--no-run-tests",
+    "Saved change verification artifact: /home/runner/.sydes/workspaces/afe7afa7c247d1a1/artifacts/20260909T000458Z-7939a15a/change_verification.json"
+  ],
+  "diagnostics": [
+    "code_intelligence_backend=cbm transport=persistent_mcp_stdio cbm_server_version=0.10.8",
+    "cbm_session_start_ms=7507.5 cbm_calls=7 cbm_mean_call_ms=283.9",
+    "cbm_index_ms=1837.8 cbm_query_ms=154.0 sydes_route_semantics_ms=45.3 total_ms=9545.4",
+    "cbm_supplied=symbols,spans,imports,exports,call_edges,usage_edges,entrypoints  sydes_semantics=route_index,route_graph,repo_map",
+    "route_derived_entrypoints_added=7",
+    "cbm_gap: route composition is computed by Sydes, not CBM: CBM reports uncomposed route paths and models no persistence sinks",
+    "cbm_gap: app: route composition is unresolved for some containers; route-derived entrypoint paths from this repo may be incomplete",
+    "cbm_gap: CALLS/USAGE edges deferred: they are fetched as a bounded neighborhood around the changed symbols instead of a repository-wide sweep",
+    "handler_symbol_index: exports=261, files_indexed=89, imports=136, symbols=318",
+    "code_findings_prompt_chars=16902",
+    "pr_semantic_analysis_prompt_chars=9428",
+    "reverse_reach_candidate_files=3",
+    "app: deterministic_routes_found=7, deterministic_frameworks=express,express_mount_graph",
+    "app: discovery_coverage=moderate score=0.7",
+    "app: discovery_coverage_reasons=deterministic route extraction produced grounded routes; route graph composition produced mounted routes; some mount edges could not be resolved; route composition is unresolved: 2 of 2 route containers have no resolvable mount or declared prefix, so route paths may be incomplete",
+    "app: route_graph_containers=4, route_graph_declarations=7, route_graph_mount_edges=3, route_graph_composed_routes=7, route_graph_unresolved_mounts=2",
+    "app: deterministic_routes=7, llm_routes=7, merged_routes=7, rejected_routes=0, final_routes=7",
+    "app: merged_llm_routes=7",
+    "graph_slice_seeds: changed=6 routes=0 dropped_auxiliary=0 total=6",
+    "graph_slice: used=True seeds=6 canonical_seeds=6 unresolved_seeds=0 unresolved_changed=0 unresolved_auxiliary=0 graph_calls=4 nodes=155 call_edges=105 usage_edges=159 truncated=True fell_back=False",
+    "impact_interpreter: affected_entrypoints=1, ambiguous_edges=0, boundary_budget_exhausted=False, boundary_emitted=0, boundary_expansions=7, boundary_frontier_considered=7, boundary_rejected_weak_evidence=0, call_edges=105, changed_symbols=6, evidence_confirmed=0, guide_actions={'infer_impact': 6, 'stop_unresolved': 2}, guide_budget_exhausted=True, guide_calls=8, guide_error_details=[], guide_errors=0, guide_latency_ms=16661.049307000027, guide_no_progress=0, guide_triggered=True, http_entrypoints=0, known_entrypoints=7, llm_candidates=9, llm_candidates_accepted=4, llm_candidates_corroborated=0, llm_candidates_missing_reason=0, llm_candidates_self_referential=0, llm_candidates_uncorroborated=9, llm_candidates_ungrounded=3, llm_candidates_whole_change_unanchored=2, llm_new_entrypoints=1, llm_no_candidate_turns=0, unresolved_after=6, unresolved_before=6, unresolved_symbols=6, usage_edges=159",
+    "repo_profile: rebuilt (1 package(s), 2 framework(s))",
+    "boundary_reasoning: candidates=6 inferred=1",
+    "app: test_files_found=19",
+    "app: test_cases_found=41",
+    "test_frameworks_detected=go_test",
+    "ci_suite=disabled"
+  ]
+}
