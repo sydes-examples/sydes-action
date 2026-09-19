@@ -31,7 +31,7 @@ permissions:
 
 jobs:
   sydes:
-    uses: sydes-examples/sydes-action/.github/workflows/verify.yml@main
+    uses: sydes-examples/sydes-action/.github/workflows/verify.yml@v1
     with:
       repo_alias: app
     secrets:
@@ -49,7 +49,7 @@ the resulting `uses:` reference had an awkward double `.github`
 organization `.github` repo is conventionally reserved for org-wide community
 health files, not treated as a product's public entrypoint. `sydes-action` is
 a dedicated home with a clean, product-shaped reference:
-`sydes-examples/sydes-action/.github/workflows/verify.yml@main`.
+`sydes-examples/sydes-action/.github/workflows/verify.yml@v1`.
 
 This is a location/packaging move only — the workflow steps, renderer
 semantics, and `CONTRACT.md` are unchanged from what `sydes-examples/.github`
@@ -69,7 +69,8 @@ does not scale past one demo. Centralizing here means:
 
 ## Versioning
 
-For now, example repos call this workflow at `@main`. That is intentionally
-simple for v1 — every consumer currently tracks the latest version. Pinning
-consumers to a tag or SHA once this needs to stabilize independently of
-in-flight changes is a natural next step, not done yet.
+Example repos call this workflow at `@v1`, a tag pinned to a known-good
+commit rather than tracking `main`. This means an in-flight change to this
+repository never silently changes behavior for existing consumers; a new
+tag (`v2`, etc.) would be cut, and consumers would move to it deliberately,
+the same way any other reusable-action reference is versioned.

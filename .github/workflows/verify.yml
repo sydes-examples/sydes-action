@@ -10,7 +10,7 @@ name: Sydes verify (reusable)
 #
 #   jobs:
 #     sydes:
-#       uses: sydes-examples/sydes-action/.github/workflows/verify.yml@main
+#       uses: sydes-examples/sydes-action/.github/workflows/verify.yml@v1
 #       with:
 #         repo_alias: app
 #       secrets:
