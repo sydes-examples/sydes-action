@@ -883,22 +883,29 @@ def render_test_evidence(result: dict[str, Any], lines: list[str]) -> None:
 
     entries = _named_test_entries(result)
     if entries:
-        for label, verb, route, execution in entries[:_MAX_EXISTING_EVIDENCE]:
-            verb_lower = verb[0].lower() + verb[1:] if verb else verb
-            suffix = f" — {verb_lower}: {route}" if route else ""
-            lines.append(f"- {label}{suffix} ({execution})")
+        for label, checks_behavior, route, run_by_sydes in entries[:_MAX_EXISTING_EVIDENCE]:
+            lines.append(f"- {label}")
+            fields = [f"Route: {route}"] if route else []
+            fields.append(f"Checks the behavior: {checks_behavior}")
+            fields.append(f"Run by Sydes: {run_by_sydes}")
+            lines.append(f"  {' · '.join(fields)}")
         if len(entries) > _MAX_EXISTING_EVIDENCE:
             lines.append(f"_…and {len(entries) - _MAX_EXISTING_EVIDENCE} more mapped test(s) in the full result._")
         lines.append("")
 
 
-#: Human-legible name for a test's own evidence tier -- what it actually
-#: demonstrates about the route it was matched to, not an internal code.
-_TIER_COVERAGE_VERB = {
-    "A_direct_route_exercise": "Directly covers",
-    "A_direct_invocation": "Directly covers",
-    "B_asserted_effect": "Supports",
-    "C_declared": "Exercises (no assertion on this specific behavior)",
+#: Plain yes/partially/no answer to "does this test actually check the
+#: specific changed behavior" -- what a test's evidence tier demonstrates,
+#: never an internal tier code. Never collapsed to a strict yes/no: Tier B
+#: ("Supports") is real but indirect evidence, and reading identically to
+#: Tier C ("Exercises, no assertion") would quietly discard that
+#: distinction -- the exact kind of confidence-flattening this renderer is
+#: designed never to do (see the module docstring).
+_TIER_CHECKS_BEHAVIOR = {
+    "A_direct_route_exercise": "Yes",
+    "A_direct_invocation": "Yes",
+    "B_asserted_effect": "Partially",
+    "C_declared": "No",
 }
 
 _MAX_EXISTING_EVIDENCE = 4
@@ -906,10 +913,10 @@ _MAX_EXISTING_EVIDENCE = 4
 
 def _obligation_execution_note(status: str) -> str:
     if status == "passed":
-        return "passed"
+        return "Yes"
     if status == "failed":
-        return "failed"
-    return "not run by Sydes"
+        return "Yes, failed"
+    return "No"
 
 
 def _named_test_entries(result: dict[str, Any]) -> list[tuple[str, str, str, str]]:
@@ -917,8 +924,10 @@ def _named_test_entries(result: dict[str, Any]) -> list[tuple[str, str, str, str
     `supporting_tests` on each obligation -- never a new analysis pass, just
     reading data Sydes already computed. Deduplicated by (file, case) since
     the same test can be attached to more than one obligation on a flow.
-    Returns (test_label, coverage_verb, route_label, execution_note) tuples.
-    """
+    Returns (test_label, checks_behavior, scope_label, run_by_sydes) tuples
+    -- each a plain yes/partially/no answer, not a technical phrase, for
+    the compact "Route: ... · Checks the behavior: ... · Run by Sydes: ..."
+    line this feeds (see `render_test_evidence`)."""
     entries: list[tuple[str, str, str, str]] = []
     seen: set[tuple[str, str]] = set()
     for flow in _as_list(_get(result, "affected_flows", default=[])):
@@ -938,9 +947,9 @@ def _named_test_entries(result: dict[str, Any]) -> list[tuple[str, str, str, str
                     continue
                 seen.add(key)
                 tier = str(_get(test, "evidence_tier", default=""))
-                verb = _TIER_COVERAGE_VERB.get(tier, "Relates to")
+                checks_behavior = _TIER_CHECKS_BEHAVIOR.get(tier, "Partially")
                 file_name = file.rsplit("/", 1)[-1]
-                entries.append((f"`{file_name}::{case}`", verb, route, _obligation_execution_note(status)))
+                entries.append((f"`{file_name}::{case}`", checks_behavior, route, _obligation_execution_note(status)))
 
     # Evidence that could not be attached to any resolved flow/obligation,
     # but was preserved instead of disappearing (see
@@ -964,7 +973,7 @@ def _named_test_entries(result: dict[str, Any]) -> list[tuple[str, str, str, str
                 continue
             seen.add(key)
             file_name = file.rsplit("/", 1)[-1]
-            entries.append((f"`{file_name}::{case}`", "Relates to", scope_label, "not run by Sydes"))
+            entries.append((f"`{file_name}::{case}`", "Partially", scope_label, "No"))
     return entries
 
 

@@ -700,7 +700,7 @@ def test_unattached_evidence_is_named_and_suppresses_add_a_test():
     assert "does not allow duplicate parameter names when creating a strategy" in section
     assert "does not allow duplicate parameter names when updating a strategy" in section
     assert "changed symbol `strategySchema`" in section
-    assert "(not run by Sydes)" in section
+    assert "Run by Sydes: No" in section
     assert "Add or run a test" not in out
 
 
@@ -1171,8 +1171,9 @@ def test_existing_evidence_names_the_real_test_with_tier_and_execution():
     out = r.render(result)
     section = out.split("### Test evidence")[1].split("###")[0]
     assert "`ArticleApiTest.java::should_update_article_content_success`" in section
-    assert "directly covers: PUT /articles/{slug}" in section
-    assert "(not run by Sydes)" in section
+    assert "Route: PUT /articles/{slug}" in section
+    assert "Checks the behavior: Yes" in section
+    assert "Run by Sydes: No" in section
 
 
 def test_execution_section_states_explicitly_whether_sydes_ran_tests():
