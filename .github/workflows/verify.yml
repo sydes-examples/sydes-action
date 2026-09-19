@@ -19,6 +19,19 @@ name: Sydes verify (reusable)
 # The caller keeps its own `on: pull_request` trigger, permissions, and
 # concurrency group; this workflow inherits the same `github.event` context
 # because reusable-workflow jobs run within the caller's workflow run.
+#
+# VERSION CONSISTENCY: GitHub Actions gives a reusable workflow no way to
+# introspect the ref it was itself invoked at (no `github.*` context exposes
+# this), so `renderer_ref`'s default below cannot be computed at run time --
+# it is a literal string, kept in sync with this file's own release tag by
+# hand. Concretely: this file's `renderer_ref` default is "v1" because this
+# exact commit IS what the `v1` tag points at. Cutting a future `v2` means
+# bumping this default to "v2" in that same release commit, before moving
+# the tag -- otherwise a consumer pinning `@v2` would still silently pull
+# the `v1` renderer (or whatever "main" drifted to, if this were ever
+# pointed back at "main"). This is what keeps `uses: .../verify.yml@v1`
+# meaning "the whole v1 integration, workflow AND renderer" rather than
+# "the v1 workflow, with a renderer that can drift out from under it".
 
 on:
   workflow_call:
@@ -43,9 +56,16 @@ on:
         type: string
         default: ""
       renderer_ref:
-        description: Git ref of this repository to pull the renderer script from.
+        description: >-
+          Git ref of this repository to pull the renderer script from.
+          Defaults to this workflow's own release tag (see the module-level
+          comment above), never "main" -- a consumer pinning `@v1` gets the
+          v1 renderer too, not whatever the tip of main happens to be at
+          run time. Override only for the same deliberate-pinning use case
+          `sydes_ref` documents above (e.g. testing an unreleased renderer
+          change); most callers should never set this.
         type: string
-        default: "main"
+        default: "v1"
       recovery_route_context:
         description: >-
           Pass `--recovery-route-context` to `sydes verify-change` (see
