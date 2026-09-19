@@ -883,15 +883,14 @@ def render_test_evidence(result: dict[str, Any], lines: list[str]) -> None:
 
     entries = _named_test_entries(result)
     if entries:
+        lines.append("| Test | Route | Checks the behavior | Run by Sydes |")
+        lines.append("| --- | --- | --- | --- |")
         for label, checks_behavior, route, run_by_sydes in entries[:_MAX_EXISTING_EVIDENCE]:
-            lines.append(f"- {label}")
-            fields = [f"Route: {route}"] if route else []
-            fields.append(f"Checks the behavior: {checks_behavior}")
-            fields.append(f"Run by Sydes: {run_by_sydes}")
-            lines.append(f"  {' · '.join(fields)}")
+            lines.append(f"| {label} | {route or '—'} | {checks_behavior} | {run_by_sydes} |")
+        lines.append("")
         if len(entries) > _MAX_EXISTING_EVIDENCE:
             lines.append(f"_…and {len(entries) - _MAX_EXISTING_EVIDENCE} more mapped test(s) in the full result._")
-        lines.append("")
+            lines.append("")
 
 
 #: Plain yes/partially/no answer to "does this test actually check the
@@ -1249,7 +1248,7 @@ def render_review(result: dict[str, Any], lines: list[str]) -> None:
             lines.append("")
             for observation in observations:
                 lines.append(f"- {observation}")
-            lines.append("")
+                lines.append("")
         return
 
     severities = [str(_get(f, "severity", default="P3")) for f in findings]
