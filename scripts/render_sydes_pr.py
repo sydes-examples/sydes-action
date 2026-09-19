@@ -826,13 +826,18 @@ def _obligation_has_mapped_test(obligation: dict[str, Any]) -> bool:
 
 
 def render_test_evidence(result: dict[str, Any], lines: list[str]) -> None:
-    """Compact state lines first (is a test found; is the behavior verified),
-    then the named evidence and execution detail that used to live in their
-    own "Existing evidence"/"Execution" sections -- same underlying data,
-    folded into one section since it's all "test evidence" a reviewer reads
-    together. The two dropped checklist lines ("Changed behavior
-    identified"/"Affected API/system path established") are still answered,
-    just implicitly, by Change/What it may affect having content above."""
+    """A compact `Check | Result` table first -- every status fact a
+    reviewer needs (a test found; each behavior category's verification
+    state; whether Sydes actually ran anything; how complete route
+    discovery was) as one glanceable row each, instead of the same facts
+    restated across several prose sections. Named test evidence follows as
+    one line per test, not a paragraph -- detail for whoever wants it,
+    without re-explaining what the table already said.
+
+    The two dropped checklist lines from the very first version of this
+    section ("Changed behavior identified"/"Affected API/system path
+    established") are still answered implicitly by Change/What it may
+    affect having content above."""
     about_this_change, about_the_route = _obligations_split_by_relevance(result)
     # Same fallback used throughout: when `introduced_by_change` is
     # unpopulated everywhere (a known data gap on some analysis paths, not
@@ -844,109 +849,47 @@ def render_test_evidence(result: dict[str, Any], lines: list[str]) -> None:
     # pass yet -- that IS a real answer, not a data gap.
     relevant = about_this_change if about_this_change else about_the_route
     has_mapped_test = any(_obligation_has_mapped_test(o) for o in relevant)
-    has_failure = any(str(_get(o, "status", default="")) == "failed" for o in relevant)
-    all_verified = bool(relevant) and all(
-        str(_get(o, "status", default="")) == "passed" for o in relevant
-    )
-
-    if all_verified:
-        state_line = "✅ Changed behavior verified"
-    elif has_failure:
-        state_line = "❌ Changed behavior verified"
-    elif has_mapped_test:
-        # Found, not (yet) executed/confirmed -- a handoff, never a dead
-        # end. See `_unverified_reason_phrase` for the same "run it
-        # yourself" framing applied to the detailed reason. Distinct
-        # wording, not just an icon: "Changed behavior verified" paired
-        # with a neutral/failure icon reads as a positive claim the icon
-        # then undercuts.
-        state_line = "🟡 Verification pending test execution"
-    else:
-        state_line = "❌ Changed behavior verified"
 
     lines.append("### Test evidence")
     lines.append("")
-    lines.append(("✅" if has_mapped_test else "❌") + " Relevant regression test found")
-    lines.append(state_line)
-    lines.append("")
-
-    # Per-category verified breakdown -- folded in from what used to be its
-    # own "### Verified" section. Only the categories behind the state line
-    # above (`relevant`); a passed category on the surrounding, pre-existing
-    # route is not separately broken out here (see `render_what_is_still_
-    # unknown` for how its GAPS are still surfaced, tagged inline).
-    verified_categories, _unverified_here = _categorize_obligations(relevant)
-    if verified_categories:
-        for label in verified_categories:
-            lines.append(f"- {label}")
-        lines.append("")
+    lines.append("| Check | Result |")
+    lines.append("| --- | --- |")
+    lines.append(f"| Relevant regression test | {'✅ Found' if has_mapped_test else '❌ Not found'} |")
+    for label, obligation in _category_status_rows(relevant):
+        lines.append(f"| {label} | {_short_status_phrase(obligation)} |")
 
     counts = _get(result, "summary", "counts", default={})
-    tests_summary = _relevant_tests_row(counts)
-    entries = _named_test_entries(result)
-    if entries or tests_summary != "None identified":
-        # `tests_summary` is derived from `summary.counts` (an aggregate
-        # Sydes computes separately from `mapped_tests`/`unattached_
-        # evidence`); the two can disagree on a captured/trimmed result --
-        # confirmed on a real run, where "None identified" printed directly
-        # above a named test entry. Never print a contradicting aggregate
-        # line when named entries themselves prove otherwise.
-        if not (entries and tests_summary == "None identified"):
-            lines.append(tests_summary)
-            lines.append("")
-        for label, verb, route, execution in entries[:_MAX_EXISTING_EVIDENCE]:
-            lines.append(f"- {label}")
-            if route:
-                lines.append(f"  {verb}: {route}")
-            lines.append(f"  Execution: {execution}")
-        if len(entries) > _MAX_EXISTING_EVIDENCE:
-            lines.append(f"_…and {len(entries) - _MAX_EXISTING_EVIDENCE} more mapped test(s) in the full result._")
-        lines.append("")
-
     executed = counts.get("tests_executed", 0) or _executed_test_count(result)
     if executed:
-        lines.append(f"**Tests executed by Sydes:** Yes — {executed} test(s) run.")
+        lines.append(f"| Test executed by Sydes | ✅ Yes — {executed} test(s) run |")
     else:
         disabled = any(
             "no-run-tests" in str(note) for note in _as_list(_get(result, "notes", default=[]))
         )
-        if disabled:
-            lines.append(
-                "**Tests executed by Sydes:** No — test execution is disabled in this workflow "
-                "(`--no-run-tests`). Any test(s) found above are a handoff, not a gap: run them "
-                "in your own environment or existing CI to confirm."
-            )
-        else:
-            lines.append(
-                "**Tests executed by Sydes:** No. Any test(s) found above are a handoff, not a "
-                "gap: run them in your own environment or existing CI to confirm."
-            )
+        exec_result = "⬛ Not run (`--no-run-tests`)" if disabled else "⬛ Not run"
+        lines.append(f"| Test executed by Sydes | {exec_result} |")
+
+    # Route-coverage completeness gets its own top-level row -- it's exactly
+    # the kind of "how much do I trust this" signal a reviewer wants near
+    # the top, not buried in a bullet further down. The full note text is
+    # kept as a caption right under the table, not dropped.
+    coverage_note = _pick_analysis_note(result, limit=200)
+    if coverage_note:
+        lines.append("| Route coverage | 🟡 Incomplete |")
     lines.append("")
+    if coverage_note:
+        lines.append(f"_{coverage_note}_")
+        lines.append("")
 
-
-def _relevant_tests_row(counts: dict[str, Any]) -> str:
-    """Never collapse "no test verifies this" and "no test even runs near
-    this" into the same "None identified" text -- that conflation is what
-    hid 30 real (if non-gating) supporting tests behind a false negative on
-    a real NestJS evaluation run. `tests_verifying_behavior`/
-    `tests_supporting_behavior`/`tests_exercising_flows` are computed across
-    every obligation (required or not; see `VerificationCounts`), so a test
-    that only landed on an advisory test-matrix obligation still shows up
-    here even though it can never gate the verdict on its own.
-    """
-    verifying = counts.get("tests_verifying_behavior", 0)
-    supporting = counts.get("tests_supporting_behavior", 0)
-    exercising = counts.get("tests_exercising_flows", 0)
-    if not exercising:
-        return "None identified"
-    if verifying:
-        return f"{verifying} directly verify the changed behavior ({exercising} exercise the affected flow(s))"
-    if supporting:
-        return (
-            f"{exercising} test(s) exercise the affected flow(s); {supporting} support the "
-            "relevant behavior; none directly verify the changed behavior"
-        )
-    return f"{exercising} test(s) exercise the affected flow(s); none assert the changed behavior"
+    entries = _named_test_entries(result)
+    if entries:
+        for label, verb, route, execution in entries[:_MAX_EXISTING_EVIDENCE]:
+            verb_lower = verb[0].lower() + verb[1:] if verb else verb
+            suffix = f" — {verb_lower}: {route}" if route else ""
+            lines.append(f"- {label}{suffix} ({execution})")
+        if len(entries) > _MAX_EXISTING_EVIDENCE:
+            lines.append(f"_…and {len(entries) - _MAX_EXISTING_EVIDENCE} more mapped test(s) in the full result._")
+        lines.append("")
 
 
 #: Human-legible name for a test's own evidence tier -- what it actually
@@ -1093,20 +1036,21 @@ def _unverified_reason_phrase(obligation: dict[str, Any]) -> str:
     return "impact path incomplete or verification evidence insufficient"
 
 
-def _categorize_obligations(
-    obligations: list[dict[str, Any]],
-) -> tuple[list[str], list[tuple[str, str]]]:
-    """`(verified_category_labels, [(label, reason), ...])`, one row per
-    obligation KIND (never a raw statement -- see the module-level
-    filtering notes above), worst status wins within a kind."""
+def _category_status_rows(obligations: list[dict[str, Any]]) -> list[tuple[str, dict[str, Any]]]:
+    """`[(category label, worst-status obligation in that kind), ...]`, one
+    row per obligation KIND present (never a raw statement -- see the
+    module-level filtering notes above), in fixed display order, worst
+    status wins within a kind. Callers derive whatever wording they need
+    (a short table-cell phrase, or the fuller prose reason) from the
+    obligation itself -- see `_short_status_phrase`/`_unverified_reason_
+    phrase`."""
     by_category: dict[str, list[dict[str, Any]]] = {}
     for obligation in obligations:
         kind = str(_get(obligation, "kind", default=""))
         if kind in _OBLIGATION_CATEGORY_LABEL:
             by_category.setdefault(kind, []).append(obligation)
 
-    verified_categories: list[str] = []
-    unverified_rows: list[tuple[str, str]] = []
+    rows: list[tuple[str, dict[str, Any]]] = []
     for kind in _OBLIGATION_CATEGORY_ORDER:
         items = by_category.get(kind)
         if not items:
@@ -1114,55 +1058,69 @@ def _categorize_obligations(
         worst = min(
             items, key=lambda o: _OBLIGATION_STATUS_RANK.get(str(_get(o, "status", default="")), 2)
         )
-        label = _OBLIGATION_CATEGORY_LABEL[kind]
-        if str(_get(worst, "status", default="")) == "passed":
-            verified_categories.append(label)
-        else:
-            unverified_rows.append((label, _unverified_reason_phrase(worst)))
-        if len(verified_categories) + len(unverified_rows) >= _MAX_CHECKLIST_ROWS:
+        rows.append((_OBLIGATION_CATEGORY_LABEL[kind], worst))
+        if len(rows) >= _MAX_CHECKLIST_ROWS:
             break
-    return verified_categories, unverified_rows
+    return rows
+
+
+def _short_status_phrase(obligation: dict[str, Any]) -> str:
+    """Table-cell-sized status for one category row in the Test evidence
+    table -- the same underlying facts as `_unverified_reason_phrase`,
+    compressed to a few words with a leading icon. The fuller prose reason
+    is still used verbatim wherever a category needs to be explained at
+    length (see `render_what_is_still_unknown`'s "Also on this route"
+    group)."""
+    status = str(_get(obligation, "status", default=""))
+    if status == "passed":
+        return "✅ Verified"
+    raw_reason = str(_get(obligation, "reason", default="") or "").strip()
+    reason = raw_reason.lower()
+    if status == "failed":
+        # The one case worth the extra width: a genuine, already-executed
+        # failure is the single most alarming row in this table, and a
+        # bare "Failed" with no reason would be a worse regression than a
+        # slightly longer cell.
+        return f"❌ Failed — {raw_reason}" if raw_reason else "❌ Failed"
+    if "no-run-tests" in reason or "was not executed" in reason:
+        return "🟡 Found, not executed"
+    if "no existing test asserts" in reason:
+        return "❌ Not found"
+    if "exercise this flow but none assert" in reason:
+        return "🟡 Exercised, not asserted"
+    if "could not be executed" in reason or "without attributable" in reason:
+        return "⬛ Could not run"
+    return "🟡 Incomplete"
 
 
 def render_what_is_still_unknown(result: dict[str, Any], lines: list[str]) -> None:
-    """One section, but not one undifferentiated pile: what used to be four
-    separate top-level headers (Still unverified / Also on this route /
-    Before merge / Coverage limits) becomes four bold sub-labels inside a
-    single "### What is still unknown", each a small group of bullets
-    rather than a full heading of its own. The distinctions those headers
-    existed to preserve are kept exactly, just demoted one level:
+    """Only what the Test evidence table can't say: this-change,
+    per-category gaps now live as table rows there (see
+    `render_test_evidence`), so this section keeps just three groups, each
+    a bold sub-label with its own bullets rather than a full heading:
 
-    - a gap about THIS change groups under "Gaps in this change";
-    - a gap on the surrounding, pre-existing route groups separately under
-      "Also on this route (pre-existing)", so it is never mistaken for a
-      problem with the PR itself (see `_obligations_split_by_relevance`);
-    - the former "Before merge" nudges group under "Before merging";
-    - the former "Coverage limits" caveats group under "Coverage limits".
+    - a gap on the surrounding, pre-existing route (never conflated with
+      the table above, which only ever reflects THIS change -- see
+      `_obligations_split_by_relevance`);
+    - the former "Before merge" nudges, under "Before merging";
+    - a rare route-prefix diagnostic, under "Coverage limits" (the common
+      coverage-completeness signal is the table's "Route coverage" row;
+      this is only the specific "tests reference an unresolved prefix"
+      case, which doesn't fit a single status row).
 
     When `introduced_by_change` is unpopulated everywhere (a known data gap
-    on some analysis paths), there is nothing to split on -- falls back to
-    one undifferentiated "Gaps in this change" group rather than invent a
-    "this change" claim with no signal behind it."""
-    this_change_bullets: list[str] = []
+    on some analysis paths), `about_the_route` IS the table's own `relevant`
+    set (see `render_test_evidence`'s fallback) -- so there is nothing left
+    to show here as a separate, pre-existing-route group."""
     route_bullets: list[str] = []
-
     about_this_change, about_the_route = _obligations_split_by_relevance(result)
-    if about_this_change or about_the_route:
-        if about_this_change:
-            _verified, this_change_unverified = _categorize_obligations(about_this_change)
-            for label, phrase in this_change_unverified:
-                this_change_bullets.append(f"**{label}:** {phrase}")
-            if about_the_route:
-                _verified, route_unverified = _categorize_obligations(about_the_route)
-                for label, phrase in route_unverified:
-                    route_bullets.append(f"**{label}:** {phrase}")
-        else:
-            _verified, unverified = _categorize_obligations(about_the_route)
-            for label, phrase in unverified:
-                this_change_bullets.append(f"**{label}:** {phrase}")
+    if about_this_change and about_the_route:
+        for label, obligation in _category_status_rows(about_the_route):
+            if str(_get(obligation, "status", default="")) != "passed":
+                route_bullets.append(f"**{label}:** {_unverified_reason_phrase(obligation)}")
 
     # Former "Before merge" rules -- both grounded in facts already shown
-    # in What it may affect / the bullets above, nothing new invented here.
+    # in What it may affect / the table above, nothing new invented here.
     _rows, wider_areas, has_any_impact = _system_impact_data(result)
     counts = _get(result, "summary", "counts", default={})
     # Not `mapped_tests` (required obligations only) -- a test that verifies
@@ -1175,25 +1133,14 @@ def render_what_is_still_unknown(result: dict[str, Any], lines: list[str]) -> No
     if verifying_tests == 0 and has_any_impact:
         before_merge_bullets.append("Add or run a test covering the affected behavior before merging.")
 
-    # Former "Coverage limits" -- a global, repository-wide caveat (e.g.
-    # "route composition is unresolved ... some routes may be missing"),
-    # never a claim about the specific path(s) shown in What it may affect
-    # above.
-    coverage_bullets: list[str] = []
-    coverage_note = _pick_analysis_note(result, limit=200)
-    if coverage_note:
-        established_routes, _likely_routes = _flow_routes_by_status(result, _impact_status_by_id(result))
-        label = "Other coverage limits" if established_routes else "Coverage limit"
-        coverage_bullets.append(f"**{label}:** {coverage_note}")
-    coverage_bullets.extend(_route_prefix_notes(result))
+    coverage_bullets = list(_route_prefix_notes(result))
 
-    if not (this_change_bullets or route_bullets or before_merge_bullets or coverage_bullets):
+    if not (route_bullets or before_merge_bullets or coverage_bullets):
         return
 
     lines.append("### What is still unknown")
     lines.append("")
     for heading, group in (
-        ("Gaps in this change", this_change_bullets),
         ("Also on this route (pre-existing)", route_bullets),
         ("Before merging", before_merge_bullets),
         ("Coverage limits", coverage_bullets),
