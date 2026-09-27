@@ -1377,6 +1377,103 @@ def test_notable_observations_omitted_when_no_local_risks_exist():
     assert "**Notable observations**" not in out
 
 
+# ---------------------------------------------------------------------------
+# Regression: sydes-examples/demo-orders-api#5. A `local_risks` entry (from
+# `pr_semantic_analysis`, not `code_findings`) described a real, material
+# data-integrity defect (concurrent requests can jointly exceed available
+# stock) but the review still read "No blocking issues found", because the
+# blocking decision only ever looked at `code_findings`. `local_risks` now
+# carries the same P0-P3 `severity` scale as a code finding, and a P0/P1
+# risk promotes the review out of "No blocking issues found" exactly like a
+# P0/P1 finding would -- while a P2/P3 risk (a design note, not a defect)
+# still reads as a non-blocking "Notable observation", unchanged.
+# ---------------------------------------------------------------------------
+
+
+def test_material_correctness_risk_promotes_review_out_of_no_blocking_issues():
+    result = _base_result(
+        code_review_status="completed",
+        code_findings=[],
+        pr_semantic_analysis={
+            "local_risks": [
+                {
+                    "description": "The stock check and order save are separate operations; concurrent "
+                    "requests could both pass the check against the same stock value.",
+                    "severity": "P1",
+                    "citations": [{"file": "app/service.py", "line": 21}],
+                }
+            ]
+        },
+    )
+    out = r.render(result)
+    section = out.split("### Code review")[1].split("---")[0]
+    assert "**Blocking issue(s) found**" in section
+    assert "**No blocking issues found**" not in section
+    assert "concurrent requests could both pass the check" in section
+    assert "(app/service.py:21)" in section
+
+
+def test_informational_design_observation_stays_non_blocking():
+    result = _base_result(
+        code_review_status="completed",
+        code_findings=[],
+        pr_semantic_analysis={
+            "local_risks": [
+                {
+                    "description": "The comparison rejects only quantities strictly greater than stock; "
+                    "an order for exactly the available quantity is accepted.",
+                    "severity": "P3",
+                    "citations": [{"file": "app/service.py", "line": 22}],
+                }
+            ]
+        },
+    )
+    out = r.render(result)
+    section = out.split("### Code review")[1].split("---")[0]
+    assert "**No blocking issues found**" in section
+    assert "**Blocking issue(s) found**" not in section
+    assert "**Notable observations**" in section
+    assert "exactly the available quantity is accepted" in section
+
+
+def test_mixed_blocking_and_non_blocking_risks_both_shown_under_the_right_heading():
+    result = _base_result(
+        code_review_status="completed",
+        code_findings=[],
+        pr_semantic_analysis={
+            "local_risks": [
+                {
+                    "description": "Concurrent requests could both pass the same stock check.",
+                    "severity": "P1",
+                    "citations": [{"file": "app/service.py", "line": 21}],
+                },
+                {
+                    "description": "The new exception changes the service callable's failure contract "
+                    "for other callers.",
+                    "severity": "P3",
+                    "citations": [{"file": "app/service.py", "line": 9}],
+                },
+                {
+                    "description": "The exact-stock boundary is a deliberate design choice worth "
+                    "documenting.",
+                    "severity": "P2",
+                    "citations": [{"file": "app/service.py", "line": 22}],
+                },
+            ]
+        },
+    )
+    out = r.render(result)
+    section = out.split("### Code review")[1].split("---")[0]
+    assert "**Blocking issue(s) found**" in section
+    assert "Concurrent requests could both pass the same stock check." in section
+    assert "**Notable observations**" in section
+    assert "failure contract for other callers" in section
+    assert "deliberate design choice worth" in section
+    # The blocking risk must not also be repeated under Notable observations.
+    notable_section = section.split("**Notable observations**")[1]
+    assert "Concurrent requests could both pass the same stock check." not in notable_section
+
+
 def test_coverage_limits_surfaces_the_unresolved_route_prefix_diagnostic():
     """The exact case that hid why relevant-looking tests were not mapped:
     Sydes already computes this diagnostic (see

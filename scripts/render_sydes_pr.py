@@ -1232,13 +1232,20 @@ def _diagnostic_first_line(result: dict[str, Any], prefix: str) -> str:
 #: reviewed defect. Both can be shown, but under different, honestly-labeled
 #: headings, and neither is ever invented here -- only surfaced from data
 #: Sydes already produced.
+#:
+#: A `local_risks` entry now also carries a `severity` (same P0-P3 scale as
+#: `code_findings`) -- a plausible, material correctness/data-integrity
+#: defect can arrive via either path, and this renderer's blocking decision
+#: (see `render_review`) treats a P0/P1 the same way regardless of which
+#: one produced it. Only P2/P3 (or a pre-severity result with none at all,
+#: which defaults to P3) count as a non-blocking "Notable observation".
 _MAX_NOTABLE_OBSERVATIONS = 3
+_BLOCKING_SEVERITIES = ("P0", "P1")
 
 
-def _notable_observations(result: dict[str, Any]) -> list[str]:
-    risks = _as_list(_get(result, "pr_semantic_analysis", "local_risks", default=[]))
+def _risk_lines(risks: list[dict[str, Any]], limit: int) -> list[str]:
     out: list[str] = []
-    for risk in risks[:_MAX_NOTABLE_OBSERVATIONS]:
+    for risk in risks[:limit]:
         description = _clean(_get(risk, "description", default=""), limit=220)
         if not description:
             continue
@@ -1253,16 +1260,37 @@ def _notable_observations(result: dict[str, Any]) -> list[str]:
     return out
 
 
+def _all_local_risks(result: dict[str, Any]) -> list[dict[str, Any]]:
+    return _as_list(_get(result, "pr_semantic_analysis", "local_risks", default=[]))
+
+
+def _blocking_local_risks(result: dict[str, Any]) -> list[dict[str, Any]]:
+    return [r for r in _all_local_risks(result) if str(_get(r, "severity", default="P3")) in _BLOCKING_SEVERITIES]
+
+
+def _notable_observations(result: dict[str, Any]) -> list[str]:
+    non_blocking = [r for r in _all_local_risks(result) if str(_get(r, "severity", default="P3")) not in _BLOCKING_SEVERITIES]
+    return _risk_lines(non_blocking, _MAX_NOTABLE_OBSERVATIONS)
+
+
 def render_review(result: dict[str, Any], lines: list[str]) -> None:
     """`code_findings` being empty means something different depending on
     `code_review_status` -- the pass never ran, it ran and failed, or it
     ran and genuinely found nothing -- and only the status field can tell
     those apart. Rendering "no findings" for a review that never actually
-    completed would be absence of evidence read as evidence of absence."""
+    completed would be absence of evidence read as evidence of absence.
+
+    The blocking-vs-not decision is never based on `code_findings` alone:
+    a P0/P1 `local_risks` entry (see the module-level note above) is
+    exactly as blocking-worthy as a P0/P1 code finding, just produced by a
+    different pass. "High impact" (the change's own overall risk badge,
+    `summary.risk`) is a completely separate concept from a blocking code-
+    review issue and is never read here."""
     status = _get(result, "code_review_status")
     findings = _as_list(_get(result, "code_findings", default=[]))
+    blocking_risks = _blocking_local_risks(result)
     if status is None:
-        if not findings:
+        if not findings and not blocking_risks:
             return
         status = "completed"
 
@@ -1281,9 +1309,27 @@ def render_review(result: dict[str, Any], lines: list[str]) -> None:
         lines.append("")
         return
 
-    if not findings:
+    if not findings and not blocking_risks:
         lines.append("**No blocking issues found**")
         lines.append("")
+        observations = _notable_observations(result)
+        if observations:
+            lines.append("**Notable observations**")
+            lines.append("")
+            for observation in observations:
+                lines.append(f"- {observation}")
+                lines.append("")
+        return
+
+    has_blocking_finding = any(str(_get(f, "severity", default="P3")) in _BLOCKING_SEVERITIES for f in findings)
+    lines.append("**Blocking issue(s) found**" if (has_blocking_finding or blocking_risks) else "**No blocking issues found**")
+    lines.append("")
+
+    for line in _risk_lines(blocking_risks, len(blocking_risks)):
+        lines.append(f"- {line}")
+        lines.append("")
+
+    if not findings:
         observations = _notable_observations(result)
         if observations:
             lines.append("**Notable observations**")
