@@ -249,6 +249,88 @@ def test_supporting_evidence_is_shown_instead_of_none_identified():
     assert "- Add or run a test covering the affected behavior before merging." in out
 
 
+# ---------------------------------------------------------------------------
+# Regression: sydes-examples/demo-orders-api#5 real PR. `_named_test_entries`
+# scored a test's "Checks the behavior" column against its BEST tier across
+# every obligation on the route, including obligations that predate the diff
+# entirely -- a happy-path test and a pre-existing validation test both read
+# "Yes"/"Partially" for a change whose only real new behavior was a single,
+# different obligation. Fixed by scoring only against `about_this_change`
+# (the same `introduced_by_change` split `_obligations_split_by_relevance`
+# already computes for the aggregate rows), while still listing every named
+# test (never silently dropping one whose only evidence is pre-existing).
+# ---------------------------------------------------------------------------
+
+
+def test_tier_a_only_on_a_preexisting_obligation_reads_no():
+    """A test whose only evidence is Tier A on a pre-existing
+    (`introduced_by_change=False`) obligation must read "No" -- it proves
+    something about the route, not about what this diff introduced."""
+    preexisting = _make_obligation(
+        "route_contract", "POST /orders responds 201 when the order is valid",
+        introduced=False,
+        mapped_tests=[_make_test("tests/test_orders.py", "test_valid_order_creation_returns_201", "A_direct_route_exercise")],
+    )
+    result = _base_result(
+        affected_flows=[_make_flow("flow:a", "POST /orders", "OrdersController.create", "OrderService.create", obligations=[preexisting])],
+        accepted_impacts=[{"id": "flow:a", "status": "proven"}],
+    )
+    out = r.render(result)
+    section = out.split("### Test evidence")[1].split("###")[0]
+    assert "| `test_orders.py::test_valid_order_creation_returns_201` | POST /orders | No | No |" in section
+
+
+def test_weak_route_wide_evidence_does_not_suppress_a_real_tier_a_match():
+    """The same test has only weak (Tier C) evidence on a pre-existing
+    obligation, but genuine Tier A evidence on the change-relevant one --
+    must still read "Yes", not get dragged down by the unrelated weak
+    match (confirms the fix isn't over-corrected into always picking the
+    pre-existing obligation's evidence)."""
+    preexisting = _make_obligation(
+        "validation", "verifies POST /orders rejects invalid payloads",
+        introduced=False,
+        mapped_tests=[_make_test("tests/test_orders.py", "test_rejects_order_when_quantity_exceeds_stock", "C_declared")],
+    )
+    new_behavior = _make_obligation(
+        "validation", "POST /orders enforces `quantity > available_stock` and responds 400",
+        introduced=True,
+        mapped_tests=[_make_test("tests/test_orders.py", "test_rejects_order_when_quantity_exceeds_stock", "A_direct_route_exercise")],
+    )
+    result = _base_result(
+        affected_flows=[_make_flow("flow:a", "POST /orders", "OrdersController.create", "OrderService.create", obligations=[preexisting, new_behavior])],
+        accepted_impacts=[{"id": "flow:a", "status": "proven"}],
+    )
+    out = r.render(result)
+    section = out.split("### Test evidence")[1].split("###")[0]
+    assert "| `test_orders.py::test_rejects_order_when_quantity_exceeds_stock` | POST /orders | Yes | No |" in section
+
+
+def test_strongest_tier_wins_across_multiple_change_relevant_obligations():
+    """The same test is mapped to two DIFFERENT change-relevant obligations
+    at different tiers -- the stronger one must win, not whichever was
+    encountered first."""
+    weak_change_relevant = _make_obligation(
+        "validation", "POST /orders enforces the request schema",
+        introduced=True,
+        mapped_tests=[_make_test("tests/test_orders.py", "test_rejects_order_when_quantity_exceeds_stock", "C_declared")],
+    )
+    strong_change_relevant = _make_obligation(
+        "validation", "POST /orders enforces `quantity > available_stock` and responds 400",
+        introduced=True,
+        mapped_tests=[_make_test("tests/test_orders.py", "test_rejects_order_when_quantity_exceeds_stock", "A_direct_route_exercise")],
+    )
+    result = _base_result(
+        affected_flows=[_make_flow(
+            "flow:a", "POST /orders", "OrdersController.create", "OrderService.create",
+            obligations=[weak_change_relevant, strong_change_relevant],
+        )],
+        accepted_impacts=[{"id": "flow:a", "status": "proven"}],
+    )
+    out = r.render(result)
+    section = out.split("### Test evidence")[1].split("###")[0]
+    assert "| `test_orders.py::test_rejects_order_when_quantity_exceeds_stock` | POST /orders | Yes | No |" in section
+
+
 def test_verifying_tests_shown_as_the_primary_count():
     result = _base_result(
         affected_flows=[_make_flow("flow:a", "POST /login", "AuthController.login", "AuthService.login")],
@@ -1153,6 +1235,7 @@ def test_existing_evidence_names_the_real_test_with_tier_and_execution():
                 obligations=[
                     _make_obligation(
                         "route_contract", "PUT /articles/{slug} responds 200", status="unknown",
+                        introduced=True,
                         reason="Test execution was disabled (--no-run-tests)",
                         mapped_tests=[_make_test("src/test/ArticleApiTest.java", "should_update_article_content_success", "A_direct_route_exercise")],
                     )

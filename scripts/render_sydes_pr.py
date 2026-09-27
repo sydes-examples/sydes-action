@@ -907,6 +907,13 @@ _TIER_CHECKS_BEHAVIOR = {
     "C_declared": "No",
 }
 
+_TIER_RANK = {
+    "A_direct_route_exercise": 3,
+    "A_direct_invocation": 3,
+    "B_asserted_effect": 2,
+    "C_declared": 1,
+}
+
 _MAX_EXISTING_EVIDENCE = 4
 
 
@@ -926,13 +933,31 @@ def _named_test_entries(result: dict[str, Any]) -> list[tuple[str, str, str, str
     Returns (test_label, checks_behavior, scope_label, run_by_sydes) tuples
     -- each a plain yes/partially/no answer, not a technical phrase, for
     the compact "Route: ... · Checks the behavior: ... · Run by Sydes: ..."
-    line this feeds (see `render_test_evidence`)."""
-    entries: list[tuple[str, str, str, str]] = []
-    seen: set[tuple[str, str]] = set()
+    line this feeds (see `render_test_evidence`).
+
+    `checks_behavior` is scored ONLY against `about_this_change` obligations
+    (the same `introduced_by_change` split `_obligations_split_by_relevance`
+    already computes for the aggregate rows above) -- reusing it here rather
+    than inventing a second notion of relevance. A test whose only evidence
+    is on a pre-existing/route-wide obligation must read "No" for this
+    column: it proves something about the route, not about what this diff
+    introduced, and "Checks the behavior" means the latter. Every named
+    test still gets a row even then (never silently dropped) -- Route and
+    Run-by-Sydes still come from wherever the test was actually seen, since
+    those aren't "did it check THIS change" claims."""
+    about_this_change, _about_the_route = _obligations_split_by_relevance(result)
+    change_relevant_ids = {id(o) for o in about_this_change}
+
+    order_of: dict[tuple[str, str], int] = {}
+    context_of: dict[tuple[str, str], tuple[str, str]] = {}  # (route, run_by_sydes)
+    best_change: dict[tuple[str, str], tuple[int, str]] = {}  # (rank, checks_behavior)
+    counter = 0
+
     for flow in _as_list(_get(result, "affected_flows", default=[])):
         route = str(_get(flow, "entry_label", default="")).strip()
         for obligation in _as_list(_get(flow, "obligations", default=[])):
-            status = str(_get(obligation, "status", default=""))
+            is_change_relevant = id(obligation) in change_relevant_ids
+            run_by_sydes = _obligation_execution_note(str(_get(obligation, "status", default="")))
             tests = _as_list(_get(obligation, "mapped_tests", default=[])) + _as_list(
                 _get(obligation, "supporting_tests", default=[])
             )
@@ -942,13 +967,30 @@ def _named_test_entries(result: dict[str, Any]) -> list[tuple[str, str, str, str
                 if not file or not case:
                     continue
                 key = (file, case)
-                if key in seen:
+                if key not in order_of:
+                    order_of[key] = counter
+                    counter += 1
+                    context_of[key] = (route, run_by_sydes)
+                if not is_change_relevant:
                     continue
-                seen.add(key)
                 tier = str(_get(test, "evidence_tier", default=""))
+                rank = _TIER_RANK.get(tier, 0)
                 checks_behavior = _TIER_CHECKS_BEHAVIOR.get(tier, "Partially")
-                file_name = file.rsplit("/", 1)[-1]
-                entries.append((f"`{file_name}::{case}`", checks_behavior, route, _obligation_execution_note(status)))
+                existing = best_change.get(key)
+                if existing is None or rank > existing[0]:
+                    best_change[key] = (rank, checks_behavior)
+                    # A change-relevant occurrence is strictly the more
+                    # useful Route/Run-by-Sydes source once one exists.
+                    context_of[key] = (route, run_by_sydes)
+
+    entries: list[tuple[str, str, str, str]] = []
+    for key in sorted(order_of, key=lambda k: order_of[k]):
+        file, case = key
+        file_name = file.rsplit("/", 1)[-1]
+        route, run_by_sydes = context_of[key]
+        checks_behavior = best_change[key][1] if key in best_change else "No"
+        entries.append((f"`{file_name}::{case}`", checks_behavior, route, run_by_sydes))
+    seen: set[tuple[str, str]] = set(order_of.keys())
 
     # Evidence that could not be attached to any resolved flow/obligation,
     # but was preserved instead of disappearing (see
