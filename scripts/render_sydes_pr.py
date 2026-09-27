@@ -1143,6 +1143,35 @@ def _short_status_phrase(obligation: dict[str, Any]) -> str:
     return "🟡 Incomplete"
 
 
+def _mutation_gap_bullets(result: dict[str, Any]) -> list[str]:
+    """Obligations where a targeted comparator-boundary mutation check (see
+    `sydes.verify.mutation`, `--mutation-verify`) found the mapped test
+    still passed with the boundary flipped -- a possible coverage gap at
+    that exact boundary, e.g. an obligation for `quantity > stock` whose
+    test never covers `quantity == stock`. Absent entirely when
+    `--mutation-verify` wasn't used, exactly like every other opt-in
+    signal in this renderer -- never implying a boundary IS covered just
+    because this list is empty. `mutation_killed` (the boundary IS
+    protected) is not a gap and is never listed here."""
+    bullets: list[str] = []
+    for flow in _as_list(_get(result, "affected_flows", default=[])):
+        for obligation in _as_list(_get(flow, "obligations", default=[])):
+            mutation = _get(obligation, "mutation", default=None)
+            if not isinstance(mutation, dict) or mutation.get("status") != "mutation_survived":
+                continue
+            file = _get(mutation, "file", default="")
+            line = _get(mutation, "line", default="")
+            original = _get(mutation, "original_operator", default="")
+            mutated = _get(mutation, "mutated_operator", default="")
+            location = f" ({file}:{line})" if file else ""
+            bullets.append(
+                f"Boundary untested: flipping `{original}` to `{mutated}` still passes the "
+                f"mapped test{location} — a possible coverage gap at this exact boundary, "
+                "not proof it is untested."
+            )
+    return bullets
+
+
 def render_what_is_still_unknown(result: dict[str, Any], lines: list[str]) -> None:
     """Only what the Test evidence table can't say: this-change,
     per-category gaps now live as table rows there (see
@@ -1184,14 +1213,16 @@ def render_what_is_still_unknown(result: dict[str, Any], lines: list[str]) -> No
         before_merge_bullets.append("Add or run a test covering the affected behavior before merging.")
 
     coverage_bullets = list(_route_prefix_notes(result))
+    mutation_bullets = _mutation_gap_bullets(result)
 
-    if not (route_bullets or before_merge_bullets or coverage_bullets):
+    if not (route_bullets or before_merge_bullets or coverage_bullets or mutation_bullets):
         return
 
     lines.append("### What is still unknown")
     lines.append("")
     for heading, group in (
         ("Also on this route (pre-existing)", route_bullets),
+        ("Boundary coverage", mutation_bullets),
         ("Before merging", before_merge_bullets),
         ("Coverage limits", coverage_bullets),
     ):

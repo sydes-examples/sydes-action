@@ -100,6 +100,19 @@ on:
           of the default.
         type: string
         default: "20"
+      mutation_verify:
+        description: >-
+          Pass `--mutation-verify` to `sydes verify-change` (see that
+          flag's own help for what it does) -- for a validation obligation
+          this run introduced and already resolved as passed, flips a
+          `>`/`>=`/`</`<=` inside the diff's own hunks, reruns that
+          obligation's own mapped test against the mutation, and reports
+          whether it still passed (a possible coverage gap at that exact
+          boundary) or failed (the test protects it). Off by default, and
+          only meaningful when `run_tests` is also true -- it needs to
+          execute a test to mean anything.
+        type: boolean
+        default: false
     secrets:
       OPENAI_API_KEY:
         description: OpenAI key for `sydes verify-change`'s LLM calls.
@@ -151,6 +164,32 @@ jobs:
         if: inputs.run_tests && hashFiles('package.json') != ''
         run: npm install --legacy-peer-deps
 
+      # Generic across any Python repo, not this one specifically: tries the
+      # project's own declared install path(s) first, each defensively
+      # allowed to fail (a repo need not define all of them), then falls
+      # back to installing pytest directly as a last resort so the test
+      # *runner* is at least present even if a project's own test-dependency
+      # declaration doesn't match any of the conventional shapes tried here.
+      # Without this, `run_tests`/`mutation_verify` on a Python repo whose
+      # test dependencies are declared as optional/dev extras (a common,
+      # unremarkable pattern) fails at the first test invocation with "No
+      # module named pytest" -- the repository's own package was never
+      # installed at all.
+      - name: Install Python repository dependencies
+        if: inputs.run_tests && hashFiles('pyproject.toml', 'setup.py', 'requirements*.txt') != ''
+        run: |
+          set +e
+          if [ -f pyproject.toml ] || [ -f setup.py ]; then
+            pip install -e ".[dev]" 2>/dev/null \
+              || pip install -e ".[test]" 2>/dev/null \
+              || pip install -e . 2>/dev/null
+          fi
+          for req in requirements.txt requirements-dev.txt requirements-test.txt dev-requirements.txt; do
+            [ -f "$req" ] && pip install -r "$req"
+          done
+          python -m pytest --version >/dev/null 2>&1 || pip install pytest
+          set -e
+
       - name: Install Sydes
         run: |
           python -m pip install --upgrade pip
@@ -180,6 +219,9 @@ jobs:
           fi
           if [ "${{ inputs.run_tests }}" != "true" ]; then
             EXTRA_FLAGS+=(--no-run-tests)
+          fi
+          if [ "${{ inputs.mutation_verify }}" = "true" ]; then
+            EXTRA_FLAGS+=(--mutation-verify)
           fi
           sydes verify-change \
             --base "$BASE_SHA" \

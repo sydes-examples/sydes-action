@@ -747,6 +747,67 @@ def test_before_merge_recommends_a_test_when_none_identified_and_impact_found():
     assert "- Add or run a test covering the affected behavior before merging." in out
 
 
+# ---------------------------------------------------------------------------
+# Regression: sydes-examples/demo-orders-api#5 vs. Greptile's comparison.
+# Greptile separately flagged "quantity == stock is untested" by reasoning
+# alone; Sydes has the same finding available via `--mutation-verify`
+# (sydes.verify.mutation) but never rendered it. `obligation.mutation` with
+# status `mutation_survived` now surfaces as an explicit "Boundary coverage"
+# gap; `mutation_killed` is not a gap and must never appear here.
+# ---------------------------------------------------------------------------
+
+
+def test_mutation_survived_renders_as_a_boundary_coverage_gap():
+    obligation = _make_obligation(
+        "validation", "POST /orders enforces `quantity > available_stock` and responds 400",
+        introduced=True, status="passed",
+        mapped_tests=[_make_test("tests/test_orders.py", "test_rejects_order_when_quantity_exceeds_stock", "A_direct_route_exercise")],
+    )
+    obligation["mutation"] = {
+        "file": "app/service.py", "line": 22,
+        "original_operator": ">", "mutated_operator": ">=",
+        "status": "mutation_survived",
+        "mapped_test_id": "tests/test_orders.py::test_rejects_order_when_quantity_exceeds_stock",
+    }
+    result = _base_result(
+        affected_flows=[_make_flow("flow:a", "POST /orders", "OrdersController.create", "OrderService.create", obligations=[obligation])],
+        accepted_impacts=[{"id": "flow:a", "status": "proven"}],
+    )
+    out = r.render(result)
+    section = out.split("### What is still unknown")[1].split("###")[0]
+    assert "**Boundary coverage**" in section
+    assert "flipping `>` to `>=` still passes the mapped test (app/service.py:22)" in section
+
+
+def test_mutation_killed_is_not_shown_as_a_gap():
+    obligation = _make_obligation(
+        "validation", "POST /orders enforces `quantity > available_stock` and responds 400",
+        introduced=True, status="passed",
+        mapped_tests=[_make_test("tests/test_orders.py", "test_rejects_order_when_quantity_exceeds_stock", "A_direct_route_exercise")],
+    )
+    obligation["mutation"] = {
+        "file": "app/service.py", "line": 22,
+        "original_operator": ">", "mutated_operator": ">=",
+        "status": "mutation_killed",
+        "mapped_test_id": "tests/test_orders.py::test_rejects_order_when_quantity_exceeds_stock",
+    }
+    result = _base_result(
+        affected_flows=[_make_flow("flow:a", "POST /orders", "OrdersController.create", "OrderService.create", obligations=[obligation])],
+        accepted_impacts=[{"id": "flow:a", "status": "proven"}],
+    )
+    out = r.render(result)
+    assert "Boundary coverage" not in out
+    assert "mutation_killed" not in out
+
+
+def test_no_mutation_field_at_all_means_no_boundary_coverage_section():
+    """`--mutation-verify` off (the default) -- absence must never be
+    read as "boundary is covered", it just means this signal wasn't run."""
+    result = _base_result(code_review_status="completed", code_findings=[])
+    out = r.render(result)
+    assert "Boundary coverage" not in out
+
+
 def test_unattached_evidence_is_named_and_suppresses_add_a_test():
     """Unleash PR #12632-shaped regression: a changed symbol
     (`strategySchema`) with no HTTP route ever structurally established --
