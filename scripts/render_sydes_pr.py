@@ -925,6 +925,28 @@ def _obligation_execution_note(status: str) -> str:
     return "No"
 
 
+def _change_relevant_obligation_ids(result: dict[str, Any]) -> set[int]:
+    """`id()`s of every obligation, of ANY kind, with `introduced_by_change`
+    set -- deliberately NOT `_obligations_split_by_relevance`'s
+    `about_this_change` set, which is built from `_real_statement_obligations`
+    and so silently drops every `side_effect`-kind obligation regardless of
+    its `introduced_by_change` value (that filter exists to keep an
+    unparseable code-fragment statement out of headline/category-label
+    prose -- a display concern, not a relevance one). Scoring which tests
+    count as evidence for a change is a different question from which
+    obligations are presentable as their own claim, and conflating the two
+    meant a test whose ONLY evidence was a genuinely change-introduced
+    `side_effect` obligation (e.g. a Mockito `verify()` on a side effect the
+    diff's own new logic feeds) always read "No" here, even though the
+    underlying obligation was correctly attributed as part of this change."""
+    ids: set[int] = set()
+    for flow in _as_list(_get(result, "affected_flows", default=[])):
+        for obligation in _as_list(_get(flow, "obligations", default=[])):
+            if _get(obligation, "introduced_by_change", default=False):
+                ids.add(id(obligation))
+    return ids
+
+
 def _named_test_entries(result: dict[str, Any]) -> list[tuple[str, str, str, str]]:
     """Real, named test evidence pulled directly from `mapped_tests`/
     `supporting_tests` on each obligation -- never a new analysis pass, just
@@ -935,18 +957,19 @@ def _named_test_entries(result: dict[str, Any]) -> list[tuple[str, str, str, str
     the compact "Route: ... · Checks the behavior: ... · Run by Sydes: ..."
     line this feeds (see `render_test_evidence`).
 
-    `checks_behavior` is scored ONLY against `about_this_change` obligations
-    (the same `introduced_by_change` split `_obligations_split_by_relevance`
-    already computes for the aggregate rows above) -- reusing it here rather
-    than inventing a second notion of relevance. A test whose only evidence
-    is on a pre-existing/route-wide obligation must read "No" for this
-    column: it proves something about the route, not about what this diff
-    introduced, and "Checks the behavior" means the latter. Every named
-    test still gets a row even then (never silently dropped) -- Route and
-    Run-by-Sydes still come from wherever the test was actually seen, since
-    those aren't "did it check THIS change" claims."""
-    about_this_change, _about_the_route = _obligations_split_by_relevance(result)
-    change_relevant_ids = {id(o) for o in about_this_change}
+    `checks_behavior` is scored against every `introduced_by_change`
+    obligation regardless of kind (see `_change_relevant_obligation_ids`) --
+    a distinct, narrower notion of relevance than `_obligations_split_by_
+    relevance`'s `about_this_change` (used for the aggregate/headline rows
+    above), which additionally filters through `_real_statement_obligations`
+    for display reasons that don't apply to per-test scoring. A test whose
+    only evidence is on a pre-existing/route-wide obligation must still read
+    "No" for this column: it proves something about the route, not about
+    what this diff introduced, and "Checks the behavior" means the latter.
+    Every named test still gets a row even then (never silently dropped) --
+    Route and Run-by-Sydes still come from wherever the test was actually
+    seen, since those aren't "did it check THIS change" claims."""
+    change_relevant_ids = _change_relevant_obligation_ids(result)
 
     order_of: dict[tuple[str, str], int] = {}
     context_of: dict[tuple[str, str], tuple[str, str]] = {}  # (route, run_by_sydes)

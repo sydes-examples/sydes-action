@@ -331,6 +331,79 @@ def test_strongest_tier_wins_across_multiple_change_relevant_obligations():
     assert "| `test_orders.py::test_rejects_order_when_quantity_exceeds_stock` | POST /orders | Yes | No |" in section
 
 
+# ---------------------------------------------------------------------------
+# Regression: sydes-examples/spring-boot-demo#2 real PR. A test's ONLY
+# evidence was a `side_effect`-kind obligation (`MonitorService.kickout`
+# accessing `redisUtil.delete(...)`, verified via Mockito's
+# `verify(redisUtil).delete(...)`) that WAS correctly `introduced_by_change`
+# -- but `_named_test_entries` scored against `_obligations_split_by_
+# relevance`'s `about_this_change` set, which is built from
+# `_real_statement_obligations` and unconditionally excludes every
+# `side_effect`-kind obligation (`_CODE_FRAGMENT_OBLIGATION_KINDS`), a filter
+# that exists to keep an unparseable code-fragment statement out of
+# headline/category-label prose, not to decide per-test relevance. The test
+# always read "No" despite genuinely strong (`B_asserted_effect`) evidence
+# for a change-introduced obligation. Fixed via `_change_relevant_obligation_
+# ids`, which scores against EVERY `introduced_by_change` obligation
+# regardless of kind, independent of the display-oriented filter.
+# ---------------------------------------------------------------------------
+
+
+def test_side_effect_obligation_introduced_by_change_is_change_relevant_for_scoring():
+    """A `side_effect`-kind obligation that IS `introduced_by_change` must
+    still count toward a test's "Checks the behavior" score, even though
+    `side_effect` obligations are deliberately excluded from headline/
+    category-label prose elsewhere."""
+    side_effect = _make_obligation(
+        "side_effect", "DELETE /api/monitor/online/user/kickout accessed redisUtil.delete(redisKeys);",
+        introduced=True,
+        mapped_tests=[_make_test(
+            "MonitorServiceTest.java", "kickoutFiltersBlankAndDuplicateNames", "B_asserted_effect",
+        )],
+    )
+    result = _base_result(
+        affected_flows=[_make_flow(
+            "flow:a", "DELETE /api/monitor/online/user/kickout",
+            "MonitorController.kickoutOnlineUser", "MonitorService.kickout",
+            obligations=[side_effect],
+        )],
+        accepted_impacts=[{"id": "flow:a", "status": "proven"}],
+    )
+    out = r.render(result)
+    section = out.split("### Test evidence")[1].split("###")[0]
+    assert (
+        "| `MonitorServiceTest.java::kickoutFiltersBlankAndDuplicateNames` | "
+        "DELETE /api/monitor/online/user/kickout | Partially | No |"
+    ) in section
+
+
+def test_side_effect_obligation_not_introduced_by_change_still_reads_no():
+    """The same shape, but the `side_effect` obligation predates the diff --
+    must still read "No", confirming the fix scores by `introduced_by_change`
+    and does not simply whitelist every `side_effect` obligation."""
+    side_effect = _make_obligation(
+        "side_effect", "DELETE /api/monitor/online/user/kickout accessed redisUtil.delete(redisKeys);",
+        introduced=False,
+        mapped_tests=[_make_test(
+            "MonitorServiceTest.java", "kickoutFiltersBlankAndDuplicateNames", "B_asserted_effect",
+        )],
+    )
+    result = _base_result(
+        affected_flows=[_make_flow(
+            "flow:a", "DELETE /api/monitor/online/user/kickout",
+            "MonitorController.kickoutOnlineUser", "MonitorService.kickout",
+            obligations=[side_effect],
+        )],
+        accepted_impacts=[{"id": "flow:a", "status": "proven"}],
+    )
+    out = r.render(result)
+    section = out.split("### Test evidence")[1].split("###")[0]
+    assert (
+        "| `MonitorServiceTest.java::kickoutFiltersBlankAndDuplicateNames` | "
+        "DELETE /api/monitor/online/user/kickout | No | No |"
+    ) in section
+
+
 def test_verifying_tests_shown_as_the_primary_count():
     result = _base_result(
         affected_flows=[_make_flow("flow:a", "POST /login", "AuthController.login", "AuthService.login")],
