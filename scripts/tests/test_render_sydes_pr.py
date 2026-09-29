@@ -1832,3 +1832,59 @@ def test_change_analysis_falls_back_to_status_when_mapped_tests_is_trimmed_from_
     section = out.split("### Test evidence")[1].split("###")[0]
     assert "| Relevant regression test | ✅ Found |" in section
     assert "| Validation behavior | 🟡 Found, not executed |" in section
+
+
+# ---------------------------------------------------------------------------
+# Behavioral effect (optional `behavioral` field from --behavioral-map)
+# ---------------------------------------------------------------------------
+
+
+def test_behavioral_section_real_simplebank_result() -> None:
+    """Real result: simplebank insufficient-balance change with DiffGenome evidence.
+    Observed path, reconstruction with its grade, static-only steps and where
+    evidence stops are all shown; executed tests are never presented as asserting."""
+    md = r.render(_load("real_behavioral_diffgenome.json"))
+    assert md.index("### What it may affect") < md.index("### Behavioral effect") < md.index("### Test evidence")
+    section = md[md.index("### Behavioral effect"): md.index("### Test evidence")]
+    assert "Reaches the change (→ observed in tests, ⇢ reconstructed across a mock)" in section
+    assert "Server.createTransfer (changed) → Server.checkSufficientBalance (changed)" in section
+    assert "⇢ Queries.GetAccount    reconstructed · ARG_SHAPE" in section
+    assert "Possible only (static; no test executes it)" in section and "New → SQLStore.TransferTx" in section
+    assert "SQLStore.TransferTx    gap: no test executes it" in section
+    assert "`TestTransferAPI/InsufficientBalance` (changed in this diff)" in section
+    assert "Executing is not asserting" in section
+    assert section.count("errorResponse") == 1  # deduplicated across changed symbols
+    assert "%" not in section and "confidence" not in section.lower()
+    assert "| Relevant regression test | 🟡 11 test(s) execute the change, incl. 1 changed in this diff; none mapped as asserting it |" in md
+    assert "| Executed in isolation (DiffGenome) | ✅ 11 test(s) ran the changed code |" in md
+    rows = [line for line in md.splitlines() if line.startswith("| `transfer_test.go::")]
+    assert rows[0].startswith("| `transfer_test.go::TestTransferAPI/InsufficientBalance`")
+    assert all("| No | Yes, isolated (DiffGenome) |" in row for row in rows)
+    assert "Add or run a test covering the affected behavior" not in md
+    assert "none is mapped as asserting the new behavior" in md
+    assert "**Behavioral evidence:** DiffGenome `diffgenome-change/1`" in md
+    assert r.render(_load("real_behavioral_diffgenome.json")) == md  # deterministic
+
+
+def test_behavioral_unavailable_is_said_never_no_impact() -> None:
+    result = _load("real_behavioral_diffgenome.json")
+    result["behavioral"] = {"status": "unavailable", "reason": "DiffGenome exited 2: no executions captured"}
+    for flow in result["affected_flows"]:
+        for obligation in flow["obligations"]:
+            obligation["supporting_tests"] = []
+    md = r.render(result)
+    assert "_Executed evidence unavailable: DiffGenome exited 2: no executions captured." in md
+    assert "this is not evidence of no impact" in md
+    assert "| Executed in isolation (DiffGenome) | ⬛ Unavailable |" in md
+    assert "| Relevant regression test | ❌ Not found |" in md
+    assert "Add or run a test covering the affected behavior before merging." in md
+
+
+def test_behavioral_absent_renders_exactly_as_before() -> None:
+    result = _load("real_behavioral_diffgenome.json")
+    del result["behavioral"]
+    for flow in result["affected_flows"]:
+        for obligation in flow["obligations"]:
+            obligation["supporting_tests"] = []
+    md = r.render(result)
+    assert "Behavioral" not in md and "DiffGenome" not in md

@@ -1,0 +1,1941 @@
+{
+ "version": "v3",
+ "kind": "sydes_change_verification",
+ "generated_at": "2026-09-28T23:04:45.235417+00:00",
+ "change": {
+  "base": "origin/master",
+  "head": "5b03c1dfd15e1ee8ea8334d5a60d534239b958a5",
+  "merge_base": "67ccf46a9bb3366ab95c1ebf07b8f02f93b3b563",
+  "repos": [
+   {
+    "name": "simplebank",
+    "root": "."
+   }
+  ],
+  "includes_working_tree": false,
+  "files": [
+   {
+    "repo": "simplebank",
+    "path": "api/transfer.go",
+    "old_path": null,
+    "change_type": "modified",
+    "role": "source_route_candidate",
+    "added_lines": 14,
+    "removed_lines": 0,
+    "hunks": [
+     {
+      "start_line": 44,
+      "end_line": 47
+     },
+     {
+      "start_line": 83,
+      "end_line": 92
+     }
+    ],
+    "symbols": [
+     "simplebank:api/transfer.go:Server.checkSufficientBalance",
+     "simplebank:api/transfer.go:Server.createTransfer"
+    ],
+    "binary": false
+   },
+   {
+    "repo": "simplebank",
+    "path": "api/transfer_test.go",
+    "old_path": null,
+    "change_type": "modified",
+    "role": "test_usage_candidate",
+    "added_lines": 23,
+    "removed_lines": 0,
+    "hunks": [
+     {
+      "start_line": 225,
+      "end_line": 247
+     }
+    ],
+    "symbols": [
+     "simplebank:api/transfer_test.go:TestTransferAPI"
+    ],
+    "binary": false
+   }
+  ],
+  "symbols": [
+   {
+    "id": "simplebank:api/transfer.go:Server.createTransfer",
+    "repo": "simplebank",
+    "file": "api/transfer.go",
+    "name": "createTransfer",
+    "qualified_name": "Server.createTransfer",
+    "cbm_qualified_name": "private-tmp-claude-501-Users-ksnaik-StudioProjects-diffgenome-aefb02de-a379-42cc-819b-9d59916c2d04-scratchpad-sb.api.createTransfer",
+    "kind": "class_method",
+    "language": "go",
+    "start_line": 20,
+    "end_line": 61,
+    "change_type": "modified",
+    "changed_lines": 4,
+    "decorators": []
+   },
+   {
+    "id": "simplebank:api/transfer.go:Server.checkSufficientBalance",
+    "repo": "simplebank",
+    "file": "api/transfer.go",
+    "name": "checkSufficientBalance",
+    "qualified_name": "Server.checkSufficientBalance",
+    "cbm_qualified_name": "private-tmp-claude-501-Users-ksnaik-StudioProjects-diffgenome-aefb02de-a379-42cc-819b-9d59916c2d04-scratchpad-sb.api.checkSufficientBalance",
+    "kind": "class_method",
+    "language": "go",
+    "start_line": 84,
+    "end_line": 92,
+    "change_type": "modified",
+    "changed_lines": 9,
+    "decorators": []
+   },
+   {
+    "id": "simplebank:api/transfer_test.go:TestTransferAPI",
+    "repo": "simplebank",
+    "file": "api/transfer_test.go",
+    "name": "TestTransferAPI",
+    "qualified_name": "TestTransferAPI",
+    "cbm_qualified_name": "private-tmp-claude-501-Users-ksnaik-StudioProjects-diffgenome-aefb02de-a379-42cc-819b-9d59916c2d04-scratchpad-sb.api.TestTransferAPI",
+    "kind": "function",
+    "language": "go",
+    "start_line": 21,
+    "end_line": 315,
+    "change_type": "modified",
+    "changed_lines": 23,
+    "decorators": []
+   }
+  ],
+  "notes": []
+ },
+ "summary": {
+  "risk": "HIGH",
+  "verdict": "VERIFICATION INCOMPLETE",
+  "headline": "2 obligation(s) across 1 flow(s): 0 passed, 0 failed, 2 unverified, 0 unknown",
+  "counts": {
+   "changed_files": 2,
+   "changed_source_files": 1,
+   "changed_test_files": 1,
+   "changed_symbols": 3,
+   "affected_flows": 1,
+   "flows_partially_analyzed": 0,
+   "code_findings": 0,
+   "obligations": 2,
+   "obligations_introduced_by_change": 1,
+   "obligations_passed": 0,
+   "obligations_failed": 0,
+   "obligations_unverified": 2,
+   "obligations_unknown": 0,
+   "mapped_tests": 0,
+   "supporting_tests": 22,
+   "tests_exercising_flows": 0,
+   "tests_supporting_behavior": 11,
+   "tests_verifying_behavior": 0,
+   "changed_test_cases": 0,
+   "tests_executed": 0,
+   "verification_gaps": 0,
+   "runtime_dependencies": 2,
+   "cross_repo_impacts": 0,
+   "impacts_proven": 1,
+   "impacts_inferred": 1,
+   "impacts_not_modeled": 1,
+   "unresolved_changed_symbols": 2
+  },
+  "risk_reasons": [
+   "2 obligation(s) have no verifying test"
+  ]
+ },
+ "code_review_status": "unavailable",
+ "code_findings": [],
+ "accepted_impacts": [
+  {
+   "id": "flow:POST:/transfers",
+   "label": "POST /transfers",
+   "repo": "simplebank",
+   "kind": "http_route",
+   "status": "proven",
+   "changed_symbols": [
+    "createTransfer"
+   ],
+   "route_method": "POST",
+   "route_path": "/transfers",
+   "llm_confidence": null,
+   "llm_reason": null,
+   "llm_inference_type": null,
+   "llm_uncertainty": null,
+   "corroborated": null,
+   "behavior_label": "",
+   "verification_model_status": "modeled",
+   "provenance": "structural"
+  },
+  {
+   "id": "impact:simplebank:checkSufficientBalance",
+   "label": "transfer creation now fails with insufficient balance",
+   "repo": "simplebank",
+   "kind": "unknown",
+   "status": "inferred",
+   "changed_symbols": [
+    "(whole change)"
+   ],
+   "route_method": null,
+   "route_path": null,
+   "llm_confidence": 0.85,
+   "llm_reason": "The checkSufficientBalance function now returns false when the account balance is insufficient, which will cause transfer creation to fail with a 400 Bad Request status code.",
+   "llm_inference_type": "semantic_indirect_dependency",
+   "llm_uncertainty": "The impact on existing transfer creation requests",
+   "corroborated": false,
+   "behavior_label": "transfer creation now fails with insufficient balance",
+   "verification_model_status": "unsupported_or_partial",
+   "provenance": "structural"
+  }
+ ],
+ "pr_semantic_analysis": null,
+ "affected_boundaries": [
+  {
+   "id": "boundary:api:simplebank:private-tmp-claude-501-Users-ksnaik-StudioProjects-diffgenome-aefb02de-a379-42cc-819b-9d59916c2d04-scratchpad-sb.api.setupRouter:api/server.go",
+   "kind": "api",
+   "subtype": "route_registration",
+   "repo": "simplebank",
+   "file": "api/server.go",
+   "symbol": "setupRouter",
+   "label": "private-tmp-claude-501-Users-ksnaik-StudioProjects-diffgenome-aefb02de-a379-42cc-819b-9d59916c2d04-scratchpad-sb.api.setupRouter",
+   "changed_symbols": [
+    "createTransfer"
+   ],
+   "evidence": [
+    "usage:private-tmp-claude-501-Users-ksnaik-StudioProjects-diffgenome-aefb02de-a379-42cc-819b-9d59916c2d04-scratchpad-sb.api.setupRouter"
+   ],
+   "distance": 1,
+   "evidence_strength": "medium",
+   "status": "proven",
+   "reason": null,
+   "uncertainty": null,
+   "llm_confidence": null
+  },
+  {
+   "id": "boundary:inferred:api:simplebank:createTransfer:0",
+   "kind": "api",
+   "subtype": "http",
+   "repo": "simplebank",
+   "file": "api/server.go",
+   "symbol": "createTransfer",
+   "label": "POST /transfers",
+   "changed_symbols": [
+    "Server.createTransfer"
+   ],
+   "evidence": [
+    "relevant_source_snippets",
+    "boundary_candidates"
+   ],
+   "distance": 0,
+   "evidence_strength": "medium",
+   "status": "inferred",
+   "reason": "An HTTP request crosses into a route/handler.",
+   "uncertainty": "['The impact of checkSufficientBalance is inferred.']",
+   "llm_confidence": 0.8
+  }
+ ],
+ "affected_flows": [
+  {
+   "id": "flow:POST:/transfers",
+   "entry_kind": "route",
+   "entry_label": "POST /transfers",
+   "repo": "simplebank",
+   "method": "POST",
+   "path": "/transfers",
+   "handler": "server.createTransfer",
+   "artifact_refs": {
+    "route_file": "api/server.go",
+    "handler_file": "api/transfer.go",
+    "layered_trace_contract": "v1"
+   },
+   "changed_nodes": [
+    {
+     "repo": "simplebank",
+     "file": "api/transfer.go",
+     "symbol": "Server.createTransfer",
+     "line": 20
+    },
+    {
+     "repo": "simplebank",
+     "file": "api/transfer.go",
+     "symbol": "Server.checkSufficientBalance",
+     "line": 84
+    },
+    {
+     "repo": "simplebank",
+     "file": "api/transfer_test.go",
+     "symbol": "TestTransferAPI",
+     "line": 21
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:endpoint:1",
+     "kind": "endpoint",
+     "name": "endpoint",
+     "detail": "POST /transfers",
+     "repo": "simplebank",
+     "file": "api/server.go",
+     "symbol": "server.createTransfer",
+     "line_start": null,
+     "line_end": null,
+     "depth": 0,
+     "layer": "endpoint",
+     "evidence": [
+      {
+       "file": "api/server.go",
+       "symbol": "server.createTransfer",
+       "label": "endpoint",
+       "snippet": "POST /transfers"
+      }
+     ],
+     "confidence": 1.0,
+     "status": "grounded",
+     "metadata": {
+      "source": "layered_trace_contract"
+     }
+    },
+    {
+     "id": "step:handler:1",
+     "kind": "handler",
+     "name": "handler",
+     "detail": "server.createTransfer",
+     "repo": "simplebank",
+     "file": "api/transfer.go",
+     "symbol": "server.createTransfer",
+     "line_start": 20,
+     "line_end": null,
+     "depth": 1,
+     "layer": "handler",
+     "evidence": [
+      {
+       "file": "api/transfer.go",
+       "symbol": "server.createTransfer",
+       "label": "handler",
+       "snippet": "server.createTransfer"
+      }
+     ],
+     "confidence": 0.95,
+     "status": "grounded",
+     "metadata": {
+      "source": "layered_trace_contract"
+     }
+    },
+    {
+     "id": "step:handler:1",
+     "kind": "transform",
+     "name": "transform",
+     "detail": "var req transferRequest if err := ctx.ShouldBindJSON(&req); err != nil {",
+     "repo": "simplebank",
+     "file": "api/transfer.go",
+     "symbol": "server.createTransfer",
+     "line_start": 21,
+     "line_end": 22,
+     "depth": 1,
+     "layer": "handler",
+     "evidence": [
+      {
+       "file": "api/transfer.go",
+       "symbol": "server.createTransfer",
+       "label": "assignment",
+       "snippet": "var req transferRequest if err := ctx.ShouldBindJSON(&req); err != nil {"
+      }
+     ],
+     "confidence": 0.5,
+     "status": "grounded",
+     "metadata": {
+      "source": "layered_trace_contract"
+     }
+    },
+    {
+     "id": "step:handler:2",
+     "kind": "transform",
+     "name": "transform",
+     "detail": "ctx.JSON(http.StatusBadRequest, errorResponse(err)) return } fromAccount, valid := server.validAccount(ctx, req.FromAccountID, req.Currency) if !valid { return } authPayload := ctx.MustGet(authoriz...",
+     "repo": "simplebank",
+     "file": "api/transfer.go",
+     "symbol": "server.createTransfer",
+     "line_start": 23,
+     "line_end": 60,
+     "depth": 1,
+     "layer": "handler",
+     "evidence": [
+      {
+       "file": "api/transfer.go",
+       "symbol": "server.createTransfer",
+       "label": "statement",
+       "snippet": "ctx.JSON(http.StatusBadRequest, errorResponse(err)) return } fromAccount, valid := server.validAccount(ctx, req.FromAccountID, req.Currency) if !valid { return } authPayload := ctx.MustGet(authoriz..."
+      }
+     ],
+     "confidence": 0.5,
+     "status": "grounded",
+     "metadata": {
+      "source": "layered_trace_contract"
+     }
+    },
+    {
+     "id": "step:follow:1:0",
+     "kind": "service_call",
+     "name": "service call",
+     "detail": "Server.checkSufficientBalance",
+     "repo": "simplebank",
+     "file": "api/transfer.go",
+     "symbol": "Server.checkSufficientBalance",
+     "line_start": null,
+     "line_end": null,
+     "depth": 2,
+     "layer": "followed_call",
+     "evidence": [
+      {
+       "file": "api/transfer.go",
+       "symbol": "Server.checkSufficientBalance",
+       "label": "service_call",
+       "snippet": "Server.checkSufficientBalance"
+      }
+     ],
+     "confidence": 0.85,
+     "status": "grounded",
+     "metadata": {
+      "source": "layered_trace_contract"
+     }
+    },
+    {
+     "id": "step:follow:1:1",
+     "kind": "validation_branch",
+     "name": "validation branch",
+     "detail": "if account.Balance < amount { err := fmt.Errorf(\"account [%d] has insufficient balance: %d < %d\", account.ID, account.Balance, amount) ctx.JSON(http.StatusBadRequest, errorResponse(err)) return fal...",
+     "repo": "simplebank",
+     "file": "api/transfer.go",
+     "symbol": "Server.checkSufficientBalance",
+     "line_start": 85,
+     "line_end": 91,
+     "depth": 2,
+     "layer": "followed_call",
+     "evidence": [
+      {
+       "file": "api/transfer.go",
+       "symbol": "Server.checkSufficientBalance",
+       "label": "branch",
+       "snippet": "if account.Balance < amount { err := fmt.Errorf(\"account [%d] has insufficient balance: %d < %d\", account.ID, account.Balance, amount) ctx.JSON(http.StatusBadRequest, errorResponse(err)) return fal..."
+      }
+     ],
+     "confidence": 0.9,
+     "status": "grounded",
+     "metadata": {
+      "source": "layered_trace_contract"
+     }
+    },
+    {
+     "id": "step:follow:2:0",
+     "kind": "service_call",
+     "name": "service call",
+     "detail": "errorResponse",
+     "repo": "simplebank",
+     "file": "api/server.go",
+     "symbol": "errorResponse",
+     "line_start": null,
+     "line_end": null,
+     "depth": 2,
+     "layer": "followed_call",
+     "evidence": [
+      {
+       "file": "api/server.go",
+       "symbol": "errorResponse",
+       "label": "service_call",
+       "snippet": "errorResponse"
+      }
+     ],
+     "confidence": 0.85,
+     "status": "grounded",
+     "metadata": {
+      "source": "layered_trace_contract"
+     }
+    },
+    {
+     "id": "step:follow:2:1",
+     "kind": "response",
+     "name": "response",
+     "detail": "return gin.H{\"error\": err.Error()}",
+     "repo": "simplebank",
+     "file": "api/server.go",
+     "symbol": "errorResponse",
+     "line_start": 66,
+     "line_end": 66,
+     "depth": 2,
+     "layer": "followed_call",
+     "evidence": [
+      {
+       "file": "api/server.go",
+       "symbol": "errorResponse",
+       "label": "return",
+       "snippet": "return gin.H{\"error\": err.Error()}"
+      }
+     ],
+     "confidence": 0.9,
+     "status": "grounded",
+     "metadata": {
+      "source": "layered_trace_contract"
+     }
+    },
+    {
+     "id": "step:follow:3:0",
+     "kind": "service_call",
+     "name": "service call",
+     "detail": "Server.validAccount",
+     "repo": "simplebank",
+     "file": "api/transfer.go",
+     "symbol": "Server.validAccount",
+     "line_start": null,
+     "line_end": null,
+     "depth": 2,
+     "layer": "followed_call",
+     "evidence": [
+      {
+       "file": "api/transfer.go",
+       "symbol": "Server.validAccount",
+       "label": "service_call",
+       "snippet": "Server.validAccount"
+      }
+     ],
+     "confidence": 0.85,
+     "status": "grounded",
+     "metadata": {
+      "source": "layered_trace_contract"
+     }
+    },
+    {
+     "id": "step:follow:3:1",
+     "kind": "response",
+     "name": "response",
+     "detail": "account, err := server.store.GetAccount(ctx, accountID) if err != nil { if errors.Is(err, db.ErrRecordNotFound) { ctx.JSON(http.StatusNotFound, errorResponse(err)) return account, false } ctx.JSON(...",
+     "repo": "simplebank",
+     "file": "api/transfer.go",
+     "symbol": "Server.validAccount",
+     "line_start": 64,
+     "line_end": 81,
+     "depth": 2,
+     "layer": "followed_call",
+     "evidence": [
+      {
+       "file": "api/transfer.go",
+       "symbol": "Server.validAccount",
+       "label": "statement",
+       "snippet": "account, err := server.store.GetAccount(ctx, accountID) if err != nil { if errors.Is(err, db.ErrRecordNotFound) { ctx.JSON(http.StatusNotFound, errorResponse(err)) return account, false } ctx.JSON(..."
+      }
+     ],
+     "confidence": 0.9,
+     "status": "grounded",
+     "metadata": {
+      "source": "layered_trace_contract"
+     }
+    },
+    {
+     "id": "step:follow:4:0",
+     "kind": "service_call",
+     "name": "service call",
+     "detail": "New",
+     "repo": "simplebank",
+     "file": "db/sqlc/db.go",
+     "symbol": "New",
+     "line_start": null,
+     "line_end": null,
+     "depth": 2,
+     "layer": "followed_call",
+     "evidence": [
+      {
+       "file": "db/sqlc/db.go",
+       "symbol": "New",
+       "label": "service_call",
+       "snippet": "New"
+      }
+     ],
+     "confidence": 0.85,
+     "status": "grounded",
+     "metadata": {
+      "source": "layered_trace_contract"
+     }
+    },
+    {
+     "id": "step:follow:4:1",
+     "kind": "response",
+     "name": "response",
+     "detail": "return &Queries{db: db}",
+     "repo": "simplebank",
+     "file": "db/sqlc/db.go",
+     "symbol": "New",
+     "line_start": 21,
+     "line_end": 21,
+     "depth": 2,
+     "layer": "followed_call",
+     "evidence": [
+      {
+       "file": "db/sqlc/db.go",
+       "symbol": "New",
+       "label": "return",
+       "snippet": "return &Queries{db: db}"
+      }
+     ],
+     "confidence": 0.9,
+     "status": "grounded",
+     "metadata": {
+      "source": "layered_trace_contract"
+     }
+    },
+    {
+     "id": "step:follow:5:0",
+     "kind": "service_call",
+     "name": "service call",
+     "detail": "SQLStore.TransferTx",
+     "repo": "simplebank",
+     "file": "db/sqlc/tx_transfer.go",
+     "symbol": "SQLStore.TransferTx",
+     "line_start": null,
+     "line_end": null,
+     "depth": 2,
+     "layer": "followed_call",
+     "evidence": [
+      {
+       "file": "db/sqlc/tx_transfer.go",
+       "symbol": "SQLStore.TransferTx",
+       "label": "service_call",
+       "snippet": "SQLStore.TransferTx"
+      }
+     ],
+     "confidence": 0.85,
+     "status": "grounded",
+     "metadata": {
+      "source": "layered_trace_contract"
+     }
+    },
+    {
+     "id": "step:follow:5:1",
+     "kind": "response",
+     "name": "response",
+     "detail": "var result TransferTxResult err := store.execTx(ctx, func(q *Queries) error { var err error result.Transfer, err = q.CreateTransfer(ctx, CreateTransferParams{ FromAccountID: arg.FromAccountID, ToAc...",
+     "repo": "simplebank",
+     "file": "db/sqlc/tx_transfer.go",
+     "symbol": "SQLStore.TransferTx",
+     "line_start": 24,
+     "line_end": 63,
+     "depth": 2,
+     "layer": "followed_call",
+     "evidence": [
+      {
+       "file": "db/sqlc/tx_transfer.go",
+       "symbol": "SQLStore.TransferTx",
+       "label": "assignment",
+       "snippet": "var result TransferTxResult err := store.execTx(ctx, func(q *Queries) error { var err error result.Transfer, err = q.CreateTransfer(ctx, CreateTransferParams{ FromAccountID: arg.FromAccountID, ToAc..."
+      }
+     ],
+     "confidence": 0.9,
+     "status": "grounded",
+     "metadata": {
+      "source": "layered_trace_contract"
+     }
+    }
+   ],
+   "sinks": [],
+   "cross_repo_links": [],
+   "analysis_status": "complete",
+   "analysis_notes": [],
+   "obligations": [
+    {
+     "id": "flow:POST:/transfers::obligation-7",
+     "flow_id": "flow:POST:/transfers",
+     "kind": "validation",
+     "statement": "POST /transfers enforces `if account.Balance < amount { err := fmt.Errorf(\"account [%d] has insufficient balance: %d < %d\", account.ID, account.Balance, amount) ctx.JSON(http.StatusBadRequest, errorResponse(err)) return fal...`",
+     "origin": "trace_step",
+     "canonical_id": "6a9cc8d645711582",
+     "source_refs": [
+      "step:step:follow:1:1"
+     ],
+     "introduced_by_change": true,
+     "required": true,
+     "mapped_tests": [],
+     "executions": [],
+     "supporting_tests": [
+      {
+       "id": "diffgenome:TestTransferAPI/FromAccountCurrencyMismatch",
+       "name": "TestTransferAPI/FromAccountCurrencyMismatch",
+       "case_name": "TestTransferAPI/FromAccountCurrencyMismatch",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/FromAccountNotFound",
+       "name": "TestTransferAPI/FromAccountNotFound",
+       "case_name": "TestTransferAPI/FromAccountNotFound",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/GetAccountError",
+       "name": "TestTransferAPI/GetAccountError",
+       "case_name": "TestTransferAPI/GetAccountError",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/InsufficientBalance",
+       "name": "TestTransferAPI/InsufficientBalance",
+       "case_name": "TestTransferAPI/InsufficientBalance",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": true,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/InvalidCurrency",
+       "name": "TestTransferAPI/InvalidCurrency",
+       "case_name": "TestTransferAPI/InvalidCurrency",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/NegativeAmount",
+       "name": "TestTransferAPI/NegativeAmount",
+       "case_name": "TestTransferAPI/NegativeAmount",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/OK",
+       "name": "TestTransferAPI/OK",
+       "case_name": "TestTransferAPI/OK",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/ToAccountCurrencyMismatch",
+       "name": "TestTransferAPI/ToAccountCurrencyMismatch",
+       "case_name": "TestTransferAPI/ToAccountCurrencyMismatch",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/ToAccountNotFound",
+       "name": "TestTransferAPI/ToAccountNotFound",
+       "case_name": "TestTransferAPI/ToAccountNotFound",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/TransferTxError",
+       "name": "TestTransferAPI/TransferTxError",
+       "case_name": "TestTransferAPI/TransferTxError",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/UnauthorizedUser",
+       "name": "TestTransferAPI/UnauthorizedUser",
+       "case_name": "TestTransferAPI/UnauthorizedUser",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      }
+     ],
+     "status": "unverified",
+     "reason": "No existing test asserts this behavior",
+     "evidence": [
+      {
+       "file": "api/transfer.go",
+       "symbol": "Server.checkSufficientBalance",
+       "label": "trace_validation_branch",
+       "snippet": "if account.Balance < amount { err := fmt.Errorf(\"account [%d] has insufficient balance: %d < %d\", account.ID, account.Balance, amount) ctx.JSON(http.StatusBadRequest, errorResponse(err)) return fal..."
+      }
+     ],
+     "mutation": null
+    },
+    {
+     "id": "flow:POST:/transfers::obligation-1",
+     "flow_id": "flow:POST:/transfers",
+     "kind": "route_contract",
+     "statement": "POST /transfers responds 201 \u2014 Default 201 response skeleton.",
+     "origin": "api_contract",
+     "canonical_id": "0c94f2dd309bd74d",
+     "source_refs": [
+      "api_contract:POST /transfers:201"
+     ],
+     "introduced_by_change": false,
+     "required": true,
+     "mapped_tests": [],
+     "executions": [],
+     "supporting_tests": [
+      {
+       "id": "diffgenome:TestTransferAPI/FromAccountCurrencyMismatch",
+       "name": "TestTransferAPI/FromAccountCurrencyMismatch",
+       "case_name": "TestTransferAPI/FromAccountCurrencyMismatch",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/FromAccountNotFound",
+       "name": "TestTransferAPI/FromAccountNotFound",
+       "case_name": "TestTransferAPI/FromAccountNotFound",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/GetAccountError",
+       "name": "TestTransferAPI/GetAccountError",
+       "case_name": "TestTransferAPI/GetAccountError",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/InsufficientBalance",
+       "name": "TestTransferAPI/InsufficientBalance",
+       "case_name": "TestTransferAPI/InsufficientBalance",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": true,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/InvalidCurrency",
+       "name": "TestTransferAPI/InvalidCurrency",
+       "case_name": "TestTransferAPI/InvalidCurrency",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/NegativeAmount",
+       "name": "TestTransferAPI/NegativeAmount",
+       "case_name": "TestTransferAPI/NegativeAmount",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/OK",
+       "name": "TestTransferAPI/OK",
+       "case_name": "TestTransferAPI/OK",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/ToAccountCurrencyMismatch",
+       "name": "TestTransferAPI/ToAccountCurrencyMismatch",
+       "case_name": "TestTransferAPI/ToAccountCurrencyMismatch",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/ToAccountNotFound",
+       "name": "TestTransferAPI/ToAccountNotFound",
+       "case_name": "TestTransferAPI/ToAccountNotFound",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/TransferTxError",
+       "name": "TestTransferAPI/TransferTxError",
+       "case_name": "TestTransferAPI/TransferTxError",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      },
+      {
+       "id": "diffgenome:TestTransferAPI/UnauthorizedUser",
+       "name": "TestTransferAPI/UnauthorizedUser",
+       "case_name": "TestTransferAPI/UnauthorizedUser",
+       "repo": null,
+       "file": "api/transfer_test.go",
+       "line": null,
+       "suite": "TestTransferAPI",
+       "match_rule": "diffgenome:observed-execution",
+       "evidence_tier": "C_declared",
+       "source_refs": [
+        "diffgenome:go:api.Server.checkSufficientBalance",
+        "diffgenome:go:api.Server.createTransfer"
+       ],
+       "changed_in_diff": false,
+       "evidence": []
+      }
+     ],
+     "status": "unverified",
+     "reason": "No existing test asserts this behavior",
+     "evidence": [
+      {
+       "file": "api/server.go",
+       "symbol": "server.createTransfer",
+       "label": "api_contract_response",
+       "snippet": "201 Default 201 response skeleton."
+      }
+     ],
+     "mutation": null
+    },
+    {
+     "id": "flow:POST:/transfers::obligation-2",
+     "flow_id": "flow:POST:/transfers",
+     "kind": "route_contract",
+     "statement": "contract happy path",
+     "origin": "test_matrix",
+     "canonical_id": "6db0cc6cfec7db19",
+     "source_refs": [
+      "test_matrix:positive:post_transfers_contract_happy_path",
+      "contract_ref:responses.201",
+      "step:create_transfer",
+      "sink:database:transfer"
+     ],
+     "introduced_by_change": false,
+     "required": false,
+     "mapped_tests": [],
+     "executions": [],
+     "supporting_tests": [],
+     "status": "unverified",
+     "reason": "No existing test asserts this behavior",
+     "evidence": [
+      {
+       "file": "api/server.go",
+       "symbol": "post_transfers_contract_happy_path",
+       "label": "test_matrix_entry",
+       "snippet": "contract happy path"
+      }
+     ],
+     "mutation": null
+    },
+    {
+     "id": "flow:POST:/transfers::obligation-6",
+     "flow_id": "flow:POST:/transfers",
+     "kind": "route_contract",
+     "statement": "validates response body shape matches contract",
+     "origin": "test_matrix",
+     "canonical_id": "ac1338e399b9d6d9",
+     "source_refs": [
+      "test_matrix:error_handling:post_transfers_response_schema_validation",
+      "contract_ref:responses.201"
+     ],
+     "introduced_by_change": false,
+     "required": false,
+     "mapped_tests": [],
+     "executions": [],
+     "supporting_tests": [],
+     "status": "unverified",
+     "reason": "No existing test asserts this behavior",
+     "evidence": [
+      {
+       "file": "api/server.go",
+       "symbol": "post_transfers_response_schema_validation",
+       "label": "test_matrix_entry",
+       "snippet": "validates response body shape matches contract"
+      }
+     ],
+     "mutation": null
+    },
+    {
+     "id": "flow:POST:/transfers::obligation-5",
+     "flow_id": "flow:POST:/transfers",
+     "kind": "validation",
+     "statement": "malformed JSON validation",
+     "origin": "test_matrix",
+     "canonical_id": "dda9a9fd5fcd7c59",
+     "source_refs": [
+      "test_matrix:validation:post_transfers_malformed_json",
+      "contract_ref:request.body"
+     ],
+     "introduced_by_change": false,
+     "required": false,
+     "mapped_tests": [],
+     "executions": [],
+     "supporting_tests": [],
+     "status": "unverified",
+     "reason": "No existing test asserts this behavior",
+     "evidence": [
+      {
+       "file": "api/server.go",
+       "symbol": "post_transfers_malformed_json",
+       "label": "test_matrix_entry",
+       "snippet": "malformed JSON validation"
+      }
+     ],
+     "mutation": null
+    },
+    {
+     "id": "flow:POST:/transfers::obligation-4",
+     "flow_id": "flow:POST:/transfers",
+     "kind": "validation",
+     "statement": "verifies POST /transfers rejects invalid payloads",
+     "origin": "test_matrix",
+     "canonical_id": "2538eafb0944ca82",
+     "source_refs": [
+      "test_matrix:validation:post_transfers_rejects_invalid_payload"
+     ],
+     "introduced_by_change": false,
+     "required": false,
+     "mapped_tests": [],
+     "executions": [],
+     "supporting_tests": [],
+     "status": "unverified",
+     "reason": "No existing test asserts this behavior",
+     "evidence": [
+      {
+       "file": "api/server.go",
+       "symbol": "post_transfers_rejects_invalid_payload",
+       "label": "test_matrix_entry",
+       "snippet": "verifies POST /transfers rejects invalid payloads"
+      }
+     ],
+     "mutation": null
+    },
+    {
+     "id": "flow:POST:/transfers::obligation-3",
+     "flow_id": "flow:POST:/transfers",
+     "kind": "validation",
+     "statement": "verifies POST /transfers rejects missing required fields",
+     "origin": "test_matrix",
+     "canonical_id": "61d39b25e0482366",
+     "source_refs": [
+      "test_matrix:validation:post_transfers_rejects_missing_required_field"
+     ],
+     "introduced_by_change": false,
+     "required": false,
+     "mapped_tests": [],
+     "executions": [],
+     "supporting_tests": [],
+     "status": "unverified",
+     "reason": "No existing test asserts this behavior",
+     "evidence": [
+      {
+       "file": "api/server.go",
+       "symbol": "post_transfers_rejects_missing_required_field",
+       "label": "test_matrix_entry",
+       "snippet": "verifies POST /transfers rejects missing required fields"
+      }
+     ],
+     "mutation": null
+    }
+   ],
+   "reason": "2 of 2 obligation(s) not demonstrated",
+   "status": "unverified",
+   "impact_status": "proven",
+   "provenance": "structural"
+  }
+ ],
+ "unresolved_changed_symbols": 2,
+ "analysis_status": "partial",
+ "analysis_notes": [
+  "Code review was requested but its provider call failed; no code findings were produced. Verification is unaffected \u2014 code findings never enter the verdict.",
+  "PR semantic analysis unavailable: model output was not valid JSON.",
+  "Route composition is unresolved in simplebank; some routes may be missing.",
+  "Structural exploration was bounded for this change (max_depth reached with unexplored frontier); boundaries beyond the explored neighborhood are not established either way.",
+  "AI impact inference: 2 guide call(s) failed mid-run \u2014 guide_error=guide output was not a single JSON object",
+  "Deterministic impact analysis still ran and is reflected below; AI-inferred impact coverage may be incomplete.",
+  "Impact analysis traversal was truncated by its bounds; some reachable entrypoints may not be listed.",
+  "2 changed symbol(s) have no established impact path to any entrypoint (an AI-inferred candidate may still exist for one \u2014 see AFFECTED BEHAVIOR \u2014 but that is not the same as resolved impact coverage)."
+ ],
+ "test_executions": [],
+ "ci_suite": null,
+ "verification_gaps": [],
+ "runtime_dependencies": [
+  {
+   "id": "runtime:database:postgresql",
+   "name": "PostgreSQL",
+   "kind": "database",
+   "repo": "simplebank",
+   "required_for_flow_ids": [],
+   "detected_from": [
+    {
+     "file": ".github/workflows/test.yml",
+     "symbol": "postgres:14-alpine",
+     "label": "container_image",
+     "snippet": "image: postgres:14-alpine"
+    },
+    {
+     "file": "docker-compose.yaml",
+     "symbol": "postgres:14-alpine",
+     "label": "container_image",
+     "snippet": "image: postgres:14-alpine"
+    }
+   ],
+   "scope": "repository"
+  },
+  {
+   "id": "runtime:cache:redis",
+   "name": "Redis",
+   "kind": "cache",
+   "repo": "simplebank",
+   "required_for_flow_ids": [],
+   "detected_from": [
+    {
+     "file": "docker-compose.yaml",
+     "symbol": "redis:7-alpine",
+     "label": "container_image",
+     "snippet": "image: redis:7-alpine"
+    }
+   ],
+   "scope": "repository"
+  }
+ ],
+ "cross_repo_impacts": [],
+ "notes": [
+  "test_execution=skipped reason=--no-run-tests",
+  "Behavioral execution evidence (DiffGenome): observed 8, reconstructed 1, static-only 2, gaps 1, tests on path 11"
+ ],
+ "diagnostics": [],
+ "behavioral": {
+  "status": "available",
+  "reason": null,
+  "source": "diffgenome",
+  "artifact_format": "diffgenome-change/1",
+  "artifact_path": "diffgenome-change.json",
+  "runtime": "go/test",
+  "revision": "go-s-01-insufficient-balance",
+  "changed_symbols": [
+   "go:api.Server.checkSufficientBalance",
+   "go:api.Server.createTransfer"
+  ],
+  "changed_symbols_never_executed": [],
+  "changed_symbols_unmatched": [],
+  "nodes": [
+   {
+    "id": "go:api.<anon>@8",
+    "name": "api.<anon>@8",
+    "file": "api/validator.go",
+    "line": 8,
+    "kind": "callable",
+    "changed": false,
+    "executed_by": 14,
+    "static_match": null
+   },
+   {
+    "id": "go:api.Server.checkSufficientBalance",
+    "name": "api.Server.checkSufficientBalance",
+    "file": "api/transfer.go",
+    "line": 84,
+    "kind": "callable",
+    "changed": true,
+    "executed_by": 3,
+    "static_match": "Server.checkSufficientBalance"
+   },
+   {
+    "id": "go:api.Server.createTransfer",
+    "name": "api.Server.createTransfer",
+    "file": "api/transfer.go",
+    "line": 20,
+    "kind": "callable",
+    "changed": true,
+    "executed_by": 11,
+    "static_match": "server.createTransfer"
+   },
+   {
+    "id": "go:api.Server.validAccount",
+    "name": "api.Server.validAccount",
+    "file": "api/transfer.go",
+    "line": 63,
+    "kind": "callable",
+    "changed": false,
+    "executed_by": 9,
+    "static_match": "Server.validAccount"
+   },
+   {
+    "id": "go:api.authMiddleware.<anon>@21",
+    "name": "api.authMiddleware.<anon>@21",
+    "file": "api/middleware.go",
+    "line": 21,
+    "kind": "callable",
+    "changed": false,
+    "executed_by": 32,
+    "static_match": null
+   },
+   {
+    "id": "go:api.errorResponse",
+    "name": "api.errorResponse",
+    "file": "api/server.go",
+    "line": 65,
+    "kind": "callable",
+    "changed": false,
+    "executed_by": 36,
+    "static_match": "errorResponse"
+   },
+   {
+    "id": "go:db/sqlc.Queries.GetAccount",
+    "name": "db/sqlc.Queries.GetAccount",
+    "file": "db/sqlc/account.sql.go",
+    "line": 81,
+    "kind": "callable",
+    "changed": false,
+    "executed_by": 1,
+    "static_match": null
+   },
+   {
+    "id": "go:util.IsSupportedCurrency",
+    "name": "util.IsSupportedCurrency",
+    "file": "util/currency.go",
+    "line": 11,
+    "kind": "callable",
+    "changed": false,
+    "executed_by": 14,
+    "static_match": null
+   }
+  ],
+  "edges": [
+   {
+    "caller": "go:api.<anon>@8",
+    "callee": "go:util.IsSupportedCurrency",
+    "evidence_class": "OBSERVED_RUNTIME",
+    "runtime_evidence": "observed",
+    "join": null,
+    "state": "n/a",
+    "exit": null,
+    "probe_derived": false,
+    "ambiguous": false,
+    "static_corroborated": false,
+    "runtime_only": true,
+    "executions": [
+     "TestCreateAccountAPI/InternalError",
+     "TestCreateAccountAPI/InvalidCurrency",
+     "TestCreateAccountAPI/OK",
+     "TestTransferAPI/FromAccountCurrencyMismatch",
+     "TestTransferAPI/FromAccountNotFound",
+     "TestTransferAPI/GetAccountError",
+     "TestTransferAPI/InsufficientBalance",
+     "TestTransferAPI/InvalidCurrency",
+     "TestTransferAPI/NegativeAmount",
+     "TestTransferAPI/OK",
+     "TestTransferAPI/ToAccountCurrencyMismatch",
+     "TestTransferAPI/ToAccountNotFound",
+     "TestTransferAPI/TransferTxError",
+     "TestTransferAPI/UnauthorizedUser"
+    ],
+    "probes": [],
+    "rules": []
+   },
+   {
+    "caller": "go:api.Server.checkSufficientBalance",
+    "callee": "go:api.errorResponse",
+    "evidence_class": "OBSERVED_RUNTIME",
+    "runtime_evidence": "observed",
+    "join": null,
+    "state": "n/a",
+    "exit": null,
+    "probe_derived": false,
+    "ambiguous": false,
+    "static_corroborated": true,
+    "runtime_only": false,
+    "executions": [
+     "TestTransferAPI/InsufficientBalance"
+    ],
+    "probes": [],
+    "rules": []
+   },
+   {
+    "caller": "go:api.Server.createTransfer",
+    "callee": "go:api.<anon>@8",
+    "evidence_class": "OBSERVED_RUNTIME",
+    "runtime_evidence": "observed",
+    "join": null,
+    "state": "n/a",
+    "exit": null,
+    "probe_derived": false,
+    "ambiguous": false,
+    "static_corroborated": false,
+    "runtime_only": true,
+    "executions": [
+     "TestTransferAPI/FromAccountCurrencyMismatch",
+     "TestTransferAPI/FromAccountNotFound",
+     "TestTransferAPI/GetAccountError",
+     "TestTransferAPI/InsufficientBalance",
+     "TestTransferAPI/InvalidCurrency",
+     "TestTransferAPI/NegativeAmount",
+     "TestTransferAPI/OK",
+     "TestTransferAPI/ToAccountCurrencyMismatch",
+     "TestTransferAPI/ToAccountNotFound",
+     "TestTransferAPI/TransferTxError",
+     "TestTransferAPI/UnauthorizedUser"
+    ],
+    "probes": [],
+    "rules": []
+   },
+   {
+    "caller": "go:api.Server.createTransfer",
+    "callee": "go:api.Server.checkSufficientBalance",
+    "evidence_class": "OBSERVED_RUNTIME",
+    "runtime_evidence": "observed",
+    "join": null,
+    "state": "n/a",
+    "exit": null,
+    "probe_derived": false,
+    "ambiguous": false,
+    "static_corroborated": true,
+    "runtime_only": false,
+    "executions": [
+     "TestTransferAPI/InsufficientBalance",
+     "TestTransferAPI/OK",
+     "TestTransferAPI/TransferTxError"
+    ],
+    "probes": [],
+    "rules": []
+   },
+   {
+    "caller": "go:api.Server.createTransfer",
+    "callee": "go:api.Server.validAccount",
+    "evidence_class": "OBSERVED_RUNTIME",
+    "runtime_evidence": "observed",
+    "join": null,
+    "state": "n/a",
+    "exit": null,
+    "probe_derived": false,
+    "ambiguous": false,
+    "static_corroborated": true,
+    "runtime_only": false,
+    "executions": [
+     "TestTransferAPI/FromAccountCurrencyMismatch",
+     "TestTransferAPI/FromAccountNotFound",
+     "TestTransferAPI/GetAccountError",
+     "TestTransferAPI/InsufficientBalance",
+     "TestTransferAPI/OK",
+     "TestTransferAPI/ToAccountCurrencyMismatch",
+     "TestTransferAPI/ToAccountNotFound",
+     "TestTransferAPI/TransferTxError",
+     "TestTransferAPI/UnauthorizedUser"
+    ],
+    "probes": [],
+    "rules": []
+   },
+   {
+    "caller": "go:api.Server.createTransfer",
+    "callee": "go:api.errorResponse",
+    "evidence_class": "OBSERVED_RUNTIME",
+    "runtime_evidence": "observed",
+    "join": null,
+    "state": "n/a",
+    "exit": null,
+    "probe_derived": false,
+    "ambiguous": false,
+    "static_corroborated": true,
+    "runtime_only": false,
+    "executions": [
+     "TestTransferAPI/InvalidCurrency",
+     "TestTransferAPI/NegativeAmount",
+     "TestTransferAPI/TransferTxError",
+     "TestTransferAPI/UnauthorizedUser"
+    ],
+    "probes": [],
+    "rules": []
+   },
+   {
+    "caller": "go:api.Server.validAccount",
+    "callee": "go:api.errorResponse",
+    "evidence_class": "OBSERVED_RUNTIME",
+    "runtime_evidence": "observed",
+    "join": null,
+    "state": "n/a",
+    "exit": null,
+    "probe_derived": false,
+    "ambiguous": false,
+    "static_corroborated": true,
+    "runtime_only": false,
+    "executions": [
+     "TestTransferAPI/FromAccountCurrencyMismatch",
+     "TestTransferAPI/FromAccountNotFound",
+     "TestTransferAPI/GetAccountError",
+     "TestTransferAPI/ToAccountCurrencyMismatch",
+     "TestTransferAPI/ToAccountNotFound"
+    ],
+    "probes": [],
+    "rules": []
+   },
+   {
+    "caller": "go:api.Server.validAccount",
+    "callee": "go:db/sqlc.Queries.GetAccount",
+    "evidence_class": "COMPOSED_ARG_SHAPE",
+    "runtime_evidence": "composed",
+    "join": "ARG_SHAPE",
+    "state": "not_consulted",
+    "exit": "same",
+    "probe_derived": false,
+    "ambiguous": false,
+    "static_corroborated": false,
+    "runtime_only": true,
+    "executions": [
+     "TestTransferAPI/FromAccountCurrencyMismatch",
+     "TestTransferAPI/FromAccountNotFound",
+     "TestTransferAPI/GetAccountError",
+     "TestTransferAPI/InsufficientBalance",
+     "TestTransferAPI/OK",
+     "TestTransferAPI/ToAccountCurrencyMismatch",
+     "TestTransferAPI/ToAccountNotFound",
+     "TestTransferAPI/TransferTxError",
+     "TestTransferAPI/UnauthorizedUser"
+    ],
+    "probes": [
+     "TestDiffgenomeProbeQueriesGetAccountExecutes"
+    ],
+    "rules": [
+     "claim-member"
+    ]
+   },
+   {
+    "caller": "go:api.authMiddleware.<anon>@21",
+    "callee": "go:api.Server.createTransfer",
+    "evidence_class": "OBSERVED_RUNTIME",
+    "runtime_evidence": "observed",
+    "join": null,
+    "state": "n/a",
+    "exit": null,
+    "probe_derived": false,
+    "ambiguous": false,
+    "static_corroborated": false,
+    "runtime_only": true,
+    "executions": [
+     "TestTransferAPI/FromAccountCurrencyMismatch",
+     "TestTransferAPI/FromAccountNotFound",
+     "TestTransferAPI/GetAccountError",
+     "TestTransferAPI/InsufficientBalance",
+     "TestTransferAPI/InvalidCurrency",
+     "TestTransferAPI/NegativeAmount",
+     "TestTransferAPI/OK",
+     "TestTransferAPI/ToAccountCurrencyMismatch",
+     "TestTransferAPI/ToAccountNotFound",
+     "TestTransferAPI/TransferTxError",
+     "TestTransferAPI/UnauthorizedUser"
+    ],
+    "probes": [],
+    "rules": []
+   },
+   {
+    "caller": "go:api.Server.createTransfer",
+    "callee": "go:db/sqlc.SQLStore.TransferTx",
+    "evidence_class": "GAP",
+    "runtime_evidence": "gap",
+    "join": null,
+    "state": null,
+    "exit": null,
+    "probe_derived": false,
+    "ambiguous": false,
+    "static_corroborated": false,
+    "runtime_only": false,
+    "executions": [
+     "TestTransferAPI/OK",
+     "TestTransferAPI/TransferTxError"
+    ],
+    "probes": [],
+    "rules": [
+     "claim-member"
+    ]
+   },
+   {
+    "caller": "go:db/sqlc.Queries.GetAccount",
+    "callee": "stand-in:go:api.fakeDB.QueryRow",
+    "evidence_class": "UNRESOLVED",
+    "runtime_evidence": "unresolved",
+    "join": null,
+    "state": null,
+    "exit": null,
+    "probe_derived": false,
+    "ambiguous": false,
+    "static_corroborated": false,
+    "runtime_only": false,
+    "executions": [
+     "TestDiffgenomeProbeQueriesGetAccountExecutes"
+    ],
+    "probes": [],
+    "rules": [
+     "no-claim"
+    ]
+   },
+   {
+    "caller": "go:db/sqlc.Queries.GetAccount",
+    "callee": "stand-in:go:api.fakeRow.Scan",
+    "evidence_class": "UNRESOLVED",
+    "runtime_evidence": "unresolved",
+    "join": null,
+    "state": null,
+    "exit": null,
+    "probe_derived": false,
+    "ambiguous": false,
+    "static_corroborated": false,
+    "runtime_only": false,
+    "executions": [
+     "TestDiffgenomeProbeQueriesGetAccountExecutes"
+    ],
+    "probes": [],
+    "rules": [
+     "no-claim"
+    ]
+   }
+  ],
+  "static_only_steps": [
+   {
+    "symbol": "New",
+    "file": "db/sqlc/db.go",
+    "kind": "service_call"
+   },
+   {
+    "symbol": "SQLStore.TransferTx",
+    "file": "db/sqlc/tx_transfer.go",
+    "kind": "service_call"
+   }
+  ],
+  "seams": [
+   {
+    "caller": "go:api.Server.validAccount",
+    "target": "go:db/sqlc.Queries.GetAccount",
+    "accepted_candidates": 1,
+    "rejected_candidates": 3,
+    "rejection_reasons": {
+     "exit conflict: stand-in returned-error:go:*errors.errorString, fragment returned": 3
+    }
+   }
+  ],
+  "tests_on_behavioral_path": [
+   "TestTransferAPI/FromAccountCurrencyMismatch",
+   "TestTransferAPI/FromAccountNotFound",
+   "TestTransferAPI/GetAccountError",
+   "TestTransferAPI/InsufficientBalance",
+   "TestTransferAPI/InvalidCurrency",
+   "TestTransferAPI/NegativeAmount",
+   "TestTransferAPI/OK",
+   "TestTransferAPI/ToAccountCurrencyMismatch",
+   "TestTransferAPI/ToAccountNotFound",
+   "TestTransferAPI/TransferTxError",
+   "TestTransferAPI/UnauthorizedUser"
+  ],
+  "test_files": {
+   "TestTransferAPI/FromAccountCurrencyMismatch": "api/transfer_test.go",
+   "TestTransferAPI/FromAccountNotFound": "api/transfer_test.go",
+   "TestTransferAPI/GetAccountError": "api/transfer_test.go",
+   "TestTransferAPI/InsufficientBalance": "api/transfer_test.go",
+   "TestTransferAPI/InvalidCurrency": "api/transfer_test.go",
+   "TestTransferAPI/NegativeAmount": "api/transfer_test.go",
+   "TestTransferAPI/OK": "api/transfer_test.go",
+   "TestTransferAPI/ToAccountCurrencyMismatch": "api/transfer_test.go",
+   "TestTransferAPI/ToAccountNotFound": "api/transfer_test.go",
+   "TestTransferAPI/TransferTxError": "api/transfer_test.go",
+   "TestTransferAPI/UnauthorizedUser": "api/transfer_test.go"
+  },
+  "probes": {
+   "writer": "recorded",
+   "requested": 2,
+   "attempts": 2,
+   "accepted": 1,
+   "rejected": 1,
+   "llm_calls": 0
+  },
+  "facts": {
+   "observed_edges": 8,
+   "composed_edges": 1,
+   "joins": {
+    "SYMBOL": 0,
+    "ARG_SHAPE": 1,
+    "VALUE": 0,
+    "STATE": 0
+   },
+   "rejected_joins": 3,
+   "ambiguous_joins": 0,
+   "internal_gaps": 1,
+   "declarations_no_in_repo_body": 0,
+   "unresolved_boundaries": 2,
+   "external_boundaries": 0,
+   "existing_tests_contributing": 14,
+   "probe_derived_edges": 3,
+   "structural_coverage_ratio_NOT_correctness": 0.9
+  },
+  "counts": {
+   "observed_runtime": 8,
+   "composed_state": 0,
+   "composed_value": 0,
+   "composed_arg_shape": 1,
+   "composed_symbol": 0,
+   "static_only": 2,
+   "gaps": 1,
+   "unresolved": 2,
+   "external": 0,
+   "static_steps": 6,
+   "static_steps_executed": 4,
+   "runtime_only_edges": 4,
+   "tests_on_behavioral_path": 11
+  },
+  "notes": []
+ },
+ "known_routes": [
+  {
+   "method": "GET",
+   "path": "/accounts",
+   "handler": "server.listAccounts",
+   "file": "api/server.go",
+   "repo": "simplebank",
+   "service": null,
+   "evidence": [
+    {
+     "file": "api/server.go",
+     "symbol": "server.listAccounts",
+     "label": "route_declaration",
+     "snippet": "authRoutes.GET(\"/accounts\", server.listAccounts)"
+    },
+    {
+     "file": "api/server.go",
+     "symbol": "server.listAccounts",
+     "label": "declaration line",
+     "snippet": null
+    }
+   ],
+   "confidence": 1.0,
+   "status": "deterministic_composed",
+   "kind": "http",
+   "impact_status": null
+  },
+  {
+   "method": "GET",
+   "path": "/accounts/{id}",
+   "handler": "server.getAccount",
+   "file": "api/server.go",
+   "repo": "simplebank",
+   "service": null,
+   "evidence": [
+    {
+     "file": "api/server.go",
+     "symbol": "server.getAccount",
+     "label": "route_declaration",
+     "snippet": "authRoutes.GET(\"/accounts/:id\", server.getAccount)"
+    },
+    {
+     "file": "api/server.go",
+     "symbol": "server.getAccount",
+     "label": "declaration line",
+     "snippet": null
+    }
+   ],
+   "confidence": 1.0,
+   "status": "deterministic_composed",
+   "kind": "http",
+   "impact_status": null
+  },
+  {
+   "method": "POST",
+   "path": "/accounts",
+   "handler": "server.createAccount",
+   "file": "api/server.go",
+   "repo": "simplebank",
+   "service": null,
+   "evidence": [
+    {
+     "file": "api/server.go",
+     "symbol": "server.createAccount",
+     "label": "route_declaration",
+     "snippet": "authRoutes.POST(\"/accounts\", server.createAccount)"
+    },
+    {
+     "file": "api/server.go",
+     "symbol": "server.createAccount",
+     "label": "declaration line",
+     "snippet": null
+    }
+   ],
+   "confidence": 1.0,
+   "status": "deterministic_composed",
+   "kind": "http",
+   "impact_status": null
+  },
+  {
+   "method": "POST",
+   "path": "/tokens/renew_access",
+   "handler": "server",
+   "file": "api/server.go",
+   "repo": "simplebank",
+   "service": null,
+   "evidence": [
+    {
+     "file": "api/server.go",
+     "symbol": "server",
+     "label": "router.POST(\"/tokens/renew_access\", server.renewAccessToken)",
+     "snippet": "router.POST(\"/tokens/renew_access\", server.renewAccessToken)"
+    },
+    {
+     "file": "api/server.go",
+     "symbol": "server.renewAccessToken",
+     "label": "route_declaration",
+     "snippet": "router.POST(\"/tokens/renew_access\", server.renewAccessToken)"
+    }
+   ],
+   "confidence": 1.0,
+   "status": "deterministic",
+   "kind": "http",
+   "impact_status": null
+  },
+  {
+   "method": "POST",
+   "path": "/transfers",
+   "handler": "server.createTransfer",
+   "file": "api/server.go",
+   "repo": "simplebank",
+   "service": null,
+   "evidence": [
+    {
+     "file": "api/server.go",
+     "symbol": "server.createTransfer",
+     "label": "route_declaration",
+     "snippet": "authRoutes.POST(\"/transfers\", server.createTransfer)"
+    },
+    {
+     "file": "api/server.go",
+     "symbol": "server.createTransfer",
+     "label": "declaration line",
+     "snippet": null
+    }
+   ],
+   "confidence": 1.0,
+   "status": "deterministic_composed",
+   "kind": "http",
+   "impact_status": null
+  },
+  {
+   "method": "POST",
+   "path": "/users",
+   "handler": "server",
+   "file": "api/server.go",
+   "repo": "simplebank",
+   "service": null,
+   "evidence": [
+    {
+     "file": "api/server.go",
+     "symbol": "server",
+     "label": "router.POST(\"/users\", server.createUser)",
+     "snippet": "router.POST(\"/users\", server.createUser)"
+    },
+    {
+     "file": "api/server.go",
+     "symbol": "server.createUser",
+     "label": "route_declaration",
+     "snippet": "router.POST(\"/users\", server.createUser)"
+    }
+   ],
+   "confidence": 1.0,
+   "status": "deterministic",
+   "kind": "http",
+   "impact_status": null
+  },
+  {
+   "method": "POST",
+   "path": "/users/login",
+   "handler": "server",
+   "file": "api/server.go",
+   "repo": "simplebank",
+   "service": null,
+   "evidence": [
+    {
+     "file": "api/server.go",
+     "symbol": "server",
+     "label": "router.POST(\"/users/login\", server.loginUser)",
+     "snippet": "router.POST(\"/users/login\", server.loginUser)"
+    },
+    {
+     "file": "api/server.go",
+     "symbol": "server.loginUser",
+     "label": "route_declaration",
+     "snippet": "router.POST(\"/users/login\", server.loginUser)"
+    }
+   ],
+   "confidence": 1.0,
+   "status": "deterministic",
+   "kind": "http",
+   "impact_status": null
+  }
+ ],
+ "unattached_evidence": []
+}

@@ -51,6 +51,17 @@ One artifact named `sydes-result`, containing exactly:
 `sydes-result.json` still carries `diagnostics` itself. True schema
 separation (if ever done) belongs in Sydes, not in this rendering layer.
 
+## Behavioral effect (optional, additive)
+
+When the result carries `behavioral` (Sydes `--behavioral-map diffgenome`), the
+comment gains a `### Behavioral effect` section after "What it may affect" and
+one "Executed in isolation (DiffGenome)" row in the Test evidence table. Tests
+observed executing the changed code are listed as run in isolation and never as
+"Checks the behavior: Yes". When `behavioral.status` is `unavailable` the
+section states the reason and that it is not evidence of no impact. A result
+without the field renders exactly as before. This is additive: no existing
+section, row or wording changes for results that do not carry it.
+
 ## Permissions
 
 The reusable workflow requires, and the calling workflow must grant, exactly:
@@ -83,7 +94,8 @@ it is safe to adopt. That redesign is out of scope for v1.
 `render_sydes_pr.py` reads only the fields Sydes' `ChangeVerificationResult`
 JSON schema already defines (`summary`, `change`, `pr_semantic_analysis`,
 `code_findings`, `accepted_impacts`, `verification_gaps`, `analysis_notes`,
-`runtime_dependencies`, `diagnostics`, `notes`). It tolerates any of them
+`runtime_dependencies`, `diagnostics`, `notes`, and the optional
+`behavioral` field written by `--behavioral-map`). It tolerates any of them
 being absent, malformed, or an unrecognized verdict string, and always
 produces a renderable comment — including a `NOT PRODUCED` fallback body when
 the result file itself is missing or unreadable.

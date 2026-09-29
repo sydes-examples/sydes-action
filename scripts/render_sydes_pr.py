@@ -14,7 +14,10 @@ logical path (### What it may affect), what test evidence exists and whether
 it's been executed (### Test evidence), what gaps remain -- about this change
 or pre-existing on the same route -- plus any before-merge/coverage caveats
 (### What is still unknown), and what an AI review pass found (### Code
-review). Deep evidence -- full obligation lists, confidence scores, graph
+review). When the result carries executed behavioral evidence (the optional
+`behavioral` field), a ### Behavioral effect section follows What it may
+affect: what tests were observed executing, what was reconstructed and at
+which grade, what is possible only statically, and where evidence stops. Deep evidence -- full obligation lists, confidence scores, graph
 diagnostics, the complete symbol table -- belongs in the uploaded JSON
 artifact and (eventually) a dashboard, not here. A tiny, deliberately sparse
 <details> block carries a few grounding facts; it is not a second render of
@@ -825,6 +828,247 @@ def _obligation_has_mapped_test(obligation: dict[str, Any]) -> bool:
     return "no-run-tests" in reason or "was not executed" in reason
 
 
+# ---------------------------------------------------------------------------
+# Behavioral effect -- executed evidence (optional `behavioral` field, written
+# by `sydes verify-change --behavioral-map ...`). Kept visibly separate from
+# "What it may affect" (structural): this is what the repository's own
+# isolated tests were observed to execute, what was reconstructed across a
+# mock/fake seam and at which grade, what only static analysis proposes, and
+# where executed evidence stops. Grades are labels, never a score. Absent
+# field -> no section; unavailable -> said so, never "no impact".
+# ---------------------------------------------------------------------------
+
+_MAX_BEHAVIOR_CHILDREN = 6
+_MAX_BEHAVIOR_TESTS_NAMED = 3
+_REACHING_CLASSES = {
+    "OBSERVED_RUNTIME", "COMPOSED_STATE", "COMPOSED_VALUE", "COMPOSED_ARG_SHAPE", "COMPOSED_SYMBOL",
+}
+_BOUNDARY_LABEL = {
+    "GAP": "gap: no test executes it",
+    "UNRESOLVED": "unresolved stand-in",
+    "EXTERNAL": "external, kept substituted",
+}
+
+
+def _behavior_available(result: dict[str, Any]) -> dict[str, Any] | None:
+    ev = _get(result, "behavioral", default=None)
+    if isinstance(ev, dict) and ev.get("status") == "available":
+        return ev
+    return None
+
+
+def _behavior_test_keys(result: dict[str, Any]) -> dict[str, tuple[str, str]]:
+    """Tests observed executing the changed code, as test id -> (file, case) in the same
+    keying `_named_test_entries` uses."""
+    ev = _behavior_available(result)
+    if ev is None:
+        return {}
+    files = ev.get("test_files") if isinstance(ev.get("test_files"), dict) else {}
+    out: dict[str, tuple[str, str]] = {}
+    for test_id in _as_list(ev.get("tests_on_behavioral_path")):
+        test_id = str(test_id)
+        head, sep, case = test_id.partition("::")
+        out[test_id] = (str(files.get(test_id) or (head if sep else "")), case if sep else test_id)
+    return out
+
+
+def _behavior_tests_in_diff(result: dict[str, Any]) -> set[str]:
+    """Observed tests (ids) that this diff introduced or edited, as marked by Sydes on
+    whichever test entry it kept for them."""
+    keys = _behavior_test_keys(result)
+    changed_keys: set[tuple[str, str]] = set()
+    for flow in _as_list(_get(result, "affected_flows", default=[])):
+        for obligation in _as_list(_get(flow, "obligations", default=[])):
+            for test in _as_list(_get(obligation, "mapped_tests", default=[])) + _as_list(
+                _get(obligation, "supporting_tests", default=[])
+            ):
+                if _get(test, "changed_in_diff", default=False):
+                    case = str(_get(test, "case_name", default="") or _get(test, "name", default=""))
+                    changed_keys.add((str(_get(test, "file", default="") or ""), case))
+    return {test_id for test_id, key in keys.items() if key in changed_keys}
+
+
+def _behavior_name(symbol: str, nodes: dict[str, dict[str, Any]]) -> str:
+    node = nodes.get(symbol) or {}
+    name = str(node.get("name") or symbol)
+    for _ in range(2):  # drop `go:` / `stand-in:go:` style prefixes
+        head, sep, tail = name.partition(":")
+        if sep and tail and " " not in head and "/" not in head:
+            name = tail
+        else:
+            break
+    if "<anon>" in name and node.get("file"):
+        return f"anonymous fn ({node['file']}:{node.get('line', '?')})"
+    parts = name.split(".")
+    return ".".join(parts[-2:]) if len(parts) > 2 else name
+
+
+def _behavior_edge_tag(edge: dict[str, Any]) -> str:
+    cls = str(edge.get("evidence_class", ""))
+    if cls.startswith("COMPOSED_"):
+        tag = f"reconstructed · {edge.get('join') or cls.removeprefix('COMPOSED_')}"
+        if edge.get("state") == "matched":
+            tag += " · state matched"
+        if edge.get("probe_derived"):
+            tag += " · probe"
+        return tag
+    if cls in _BOUNDARY_LABEL:
+        return _BOUNDARY_LABEL[cls]
+    if edge.get("runtime_only"):
+        return "not in the static trace"
+    return ""
+
+
+def _behavior_entry_chains(ev: dict[str, Any], changed: set[str]) -> list[list[str]]:
+    parents: dict[str, list[str]] = {}
+    for edge in _as_list(ev.get("edges")):
+        if edge.get("evidence_class") in _REACHING_CLASSES and edge.get("caller") != edge.get("callee"):
+            parents.setdefault(str(edge.get("callee")), []).append(str(edge.get("caller")))
+    anchored = {
+        str(n.get("id")) for n in _as_list(ev.get("nodes")) if isinstance(n, dict) and n.get("static_match")
+    }
+
+    def rank(path: list[str]) -> tuple[bool, int]:
+        # prefer a chain that starts at a step of Sydes' own flows, then the longest
+        return (path[0] in anchored, len(path))
+
+    best: dict[str, list[str]] = {}
+    for target in sorted(changed):
+        stack = [[target]]
+        while stack:
+            path = stack.pop()
+            ups = [c for c in sorted(parents.get(path[0], [])) if c not in path]
+            if not ups or len(path) > 6:
+                if target not in best or rank(path) > rank(best[target]):
+                    best[target] = path
+                continue
+            stack.extend([c, *path] for c in ups)
+    chains = [best[k] for k in sorted(best)]
+    return [c for c in chains if not any(o != c and o[: len(c)] == c for o in chains)]
+
+
+def render_behavioral_effect(result: dict[str, Any], lines: list[str]) -> None:
+    raw = _get(result, "behavioral", default=None)
+    if not isinstance(raw, dict):
+        return
+    if raw.get("status") != "available":
+        reason = _clean(raw.get("reason") or "unknown reason", limit=160)
+        lines.append("### Behavioral effect")
+        lines.append("")
+        lines.append(
+            f"_Executed evidence unavailable: {reason}. The analysis above stands on its own; "
+            "this is not evidence of no impact._"
+        )
+        lines.append("")
+        return
+    ev = raw
+    nodes = {str(n.get("id")): n for n in _as_list(ev.get("nodes")) if isinstance(n, dict)}
+    changed = {k for k, n in nodes.items() if n.get("changed")}
+    edges = [e for e in _as_list(ev.get("edges")) if isinstance(e, dict)]
+    children: dict[str, list[dict[str, Any]]] = {}
+    for edge in edges:
+        children.setdefault(str(edge.get("caller")), []).append(edge)
+
+    def label(sym: str) -> str:
+        return _behavior_name(sym, nodes) + (" (changed)" if sym in changed else "")
+
+    block: list[str] = []
+    chains = _behavior_entry_chains(ev, changed)
+    hop_class = {(str(e.get("caller")), str(e.get("callee"))): str(e.get("evidence_class", "")) for e in edges}
+    if chains:
+        block.append("Reaches the change (→ observed in tests, ⇢ reconstructed across a mock)")
+        for chain in chains:
+            text = label(chain[0])
+            for prev, sym in zip(chain, chain[1:]):
+                glyph = "⇢" if hop_class.get((prev, sym), "").startswith("COMPOSED_") else "→"
+                text += f" {glyph} {label(sym)}"
+            block.append("  " + text)
+    shown_boundaries: list[str] = []
+    continues: list[str] = []
+    seen: set[str] = set()
+    for sym in sorted(changed):
+        kids = sorted(
+            (e for e in children.get(sym, []) if str(e.get("callee")) not in changed),
+            key=lambda e: (e.get("evidence_class") != "OBSERVED_RUNTIME", str(e.get("callee"))),
+        )
+        for edge in kids:
+            callee = str(edge.get("callee"))
+            if callee in seen:
+                continue
+            seen.add(callee)
+            cls = str(edge.get("evidence_class", ""))
+            glyph = "⇢" if cls.startswith("COMPOSED_") else "→"
+            tag = _behavior_edge_tag(edge)
+            text = f"  {glyph} {_behavior_name(callee, nodes)}"
+            if cls in _BOUNDARY_LABEL:
+                shown_boundaries.append(f"  {_behavior_name(sym, nodes)} → {_behavior_name(callee, nodes)}    {tag}")
+                continue
+            # one level below, to show a reconstruction behind an observed call
+            deeper = [
+                d for d in children.get(callee, [])
+                if str(d.get("evidence_class", "")).startswith("COMPOSED_")
+            ]
+            continues.append(text + (f"    {tag}" if tag else ""))
+            for d in deeper[:2]:
+                continues.append(f"    ⇢ {_behavior_name(str(d.get('callee')), nodes)}    {_behavior_edge_tag(d)}")
+    if continues:
+        block.append("Continues from the change")
+        block.extend(continues[:_MAX_BEHAVIOR_CHILDREN])
+        if len(continues) > _MAX_BEHAVIOR_CHILDREN:
+            block.append(f"  … +{len(continues) - _MAX_BEHAVIOR_CHILDREN} more")
+    static_only = [s for s in _as_list(ev.get("static_only_steps")) if isinstance(s, dict)]
+    if static_only:
+        block.append("Possible only (static; no test executes it)")
+        block.append("  → " + " → ".join(str(s.get("symbol")) for s in static_only[:4]))
+    for sym in _as_list(ev.get("changed_symbols_without_entry")):
+        shown_boundaries.insert(0, f"  {_behavior_name(str(sym), nodes)}    no executed path from an affected flow")
+    for edge in edges:
+        if edge.get("evidence_class") in _BOUNDARY_LABEL and str(edge.get("caller")) not in changed:
+            shown_boundaries.append(
+                f"  {_behavior_name(str(edge.get('caller')), nodes)} → "
+                f"{_behavior_name(str(edge.get('callee')), nodes)}    {_behavior_edge_tag(edge)}"
+            )
+    if shown_boundaries:
+        block.append("Evidence stops")
+        block.extend(shown_boundaries[:4])
+    if not block:
+        return
+
+    lines.append("### Behavioral effect")
+    lines.append("")
+    lines.append("```text")
+    lines.extend(block)
+    lines.append("```")
+    lines.append("")
+    tests = [str(t) for t in _as_list(ev.get("tests_on_behavioral_path"))]
+    in_diff = _behavior_tests_in_diff(result)
+    tests = sorted(tests, key=lambda t: (t not in in_diff, t))
+    probes = ev.get("probes") if isinstance(ev.get("probes"), dict) else {}
+    if tests:
+        named = ", ".join(
+            f"`{t.split('::')[-1]}`" + (" (changed in this diff)" if t in in_diff else "")
+            for t in tests[:_MAX_BEHAVIOR_TESTS_NAMED]
+        )
+        more = f" and {len(tests) - _MAX_BEHAVIOR_TESTS_NAMED} more" if len(tests) > _MAX_BEHAVIOR_TESTS_NAMED else ""
+        how = f"{len(tests)} existing test(s) executed the changed code in isolation ({named}{more})"
+    else:
+        how = "no existing test executed the changed code"
+    probe_note = (
+        f"; probes {probes.get('accepted', 0)}/{probes.get('attempts', 0)} accepted"
+        if probes.get("attempts") else "; existing tests only"
+    )
+    lines.append(f"_How we know: {how}{probe_note}. Executing is not asserting: see Test evidence._")
+    lines.append("")
+    failed = [str(t) for t in _as_list(ev.get("tests_failed_on_path"))]
+    if failed:
+        named_failed = ", ".join(f"`{t.split('::')[-1]}`" for t in failed[:_MAX_BEHAVIOR_TESTS_NAMED])
+        lines.append(
+            f"**{len(failed)} test(s) executed the changed code and failed in the isolated run:** "
+            f"{named_failed}"
+        )
+        lines.append("")
+
+
 def render_test_evidence(result: dict[str, Any], lines: list[str]) -> None:
     """A compact `Check | Result` table first -- every status fact a
     reviewer needs (a test found; each behavior category's verification
@@ -854,7 +1098,19 @@ def render_test_evidence(result: dict[str, Any], lines: list[str]) -> None:
     lines.append("")
     lines.append("| Check | Result |")
     lines.append("| --- | --- |")
-    lines.append(f"| Relevant regression test | {'✅ Found' if has_mapped_test else '❌ Not found'} |")
+    behavior = _behavior_available(result)
+    executing = [str(t) for t in _as_list((behavior or {}).get("tests_on_behavioral_path"))]
+    if has_mapped_test:
+        lines.append("| Relevant regression test | ✅ Found |")
+    elif executing:
+        in_diff = _behavior_tests_in_diff(result)
+        incl = f", incl. {len(in_diff)} changed in this diff" if in_diff else ""
+        lines.append(
+            f"| Relevant regression test | 🟡 {len(executing)} test(s) execute the change{incl}; "
+            "none mapped as asserting it |"
+        )
+    else:
+        lines.append("| Relevant regression test | ❌ Not found |")
     for label, obligation in _category_status_rows(relevant):
         lines.append(f"| {label} | {_short_status_phrase(obligation)} |")
 
@@ -868,6 +1124,16 @@ def render_test_evidence(result: dict[str, Any], lines: list[str]) -> None:
         )
         exec_result = "⬛ Not run (`--no-run-tests`)" if disabled else "⬛ Not run"
         lines.append(f"| Test executed by Sydes | {exec_result} |")
+
+    raw_behavior = _get(result, "behavioral", default=None)
+    if isinstance(raw_behavior, dict):
+        if behavior is not None:
+            if executing:
+                lines.append(f"| Executed in isolation (DiffGenome) | ✅ {len(executing)} test(s) ran the changed code |")
+            else:
+                lines.append("| Executed in isolation (DiffGenome) | ❌ No test reaches the changed code |")
+        else:
+            lines.append("| Executed in isolation (DiffGenome) | ⬛ Unavailable |")
 
     # Route-coverage completeness gets its own top-level row -- it's exactly
     # the kind of "how much do I trust this" signal a reviewer wants near
@@ -973,6 +1239,8 @@ def _named_test_entries(result: dict[str, Any]) -> list[tuple[str, str, str, str
 
     order_of: dict[tuple[str, str], int] = {}
     context_of: dict[tuple[str, str], tuple[str, str]] = {}  # (route, run_by_sydes)
+    # observed executing the changed code in DiffGenome's isolated run
+    isolated_keys: set[tuple[str, str]] = set(_behavior_test_keys(result).values())
     best_change: dict[tuple[str, str], tuple[int, str]] = {}  # (rank, checks_behavior)
     counter = 0
 
@@ -990,10 +1258,11 @@ def _named_test_entries(result: dict[str, Any]) -> list[tuple[str, str, str, str
                 if not file or not case:
                     continue
                 key = (file, case)
+                run_note = run_by_sydes
                 if key not in order_of:
                     order_of[key] = counter
                     counter += 1
-                    context_of[key] = (route, run_by_sydes)
+                    context_of[key] = (route, run_note)
                 if not is_change_relevant:
                     continue
                 tier = str(_get(test, "evidence_tier", default=""))
@@ -1004,13 +1273,17 @@ def _named_test_entries(result: dict[str, Any]) -> list[tuple[str, str, str, str
                     best_change[key] = (rank, checks_behavior)
                     # A change-relevant occurrence is strictly the more
                     # useful Route/Run-by-Sydes source once one exists.
-                    context_of[key] = (route, run_by_sydes)
+                    context_of[key] = (route, run_note)
 
+    keys = _behavior_test_keys(result)
+    diff_cases = {keys[t][1] for t in _behavior_tests_in_diff(result)}
     entries: list[tuple[str, str, str, str]] = []
-    for key in sorted(order_of, key=lambda k: order_of[k]):
+    for key in sorted(order_of, key=lambda k: (k[1] not in diff_cases, order_of[k])):
         file, case = key
         file_name = file.rsplit("/", 1)[-1]
         route, run_by_sydes = context_of[key]
+        if key in isolated_keys and run_by_sydes == "No":
+            run_by_sydes = "Yes, isolated (DiffGenome)"
         checks_behavior = best_change[key][1] if key in best_change else "No"
         entries.append((f"`{file_name}::{case}`", checks_behavior, route, run_by_sydes))
     seen: set[tuple[str, str]] = set(order_of.keys())
@@ -1232,7 +1505,15 @@ def render_what_is_still_unknown(result: dict[str, Any], lines: list[str]) -> No
     before_merge_bullets: list[str] = []
     if wider_areas:
         before_merge_bullets.append("Verify the changed behavior on the wider API surface before merging.")
-    if verifying_tests == 0 and has_any_impact:
+    executing_tests = [
+        str(t) for t in _as_list((_behavior_available(result) or {}).get("tests_on_behavioral_path"))
+    ]
+    if verifying_tests == 0 and has_any_impact and executing_tests:
+        before_merge_bullets.append(
+            f"{len(executing_tests)} existing test(s) execute the changed code, but none is mapped as "
+            "asserting the new behavior; confirm one asserts it before merging."
+        )
+    elif verifying_tests == 0 and has_any_impact:
         before_merge_bullets.append("Add or run a test covering the affected behavior before merging.")
 
     coverage_bullets = list(_route_prefix_notes(result))
@@ -1465,6 +1746,19 @@ def render_details(result: dict[str, Any], lines: list[str]) -> None:
     lines.append("<details><summary>Technical evidence</summary>")
     lines.append("")
     lines.append(f"- {line}")
+    behavior = _behavior_available(result)
+    if behavior is not None:
+        counts = behavior.get("counts") if isinstance(behavior.get("counts"), dict) else {}
+        reconstructed = sum(
+            int(counts.get(k, 0) or 0)
+            for k in ("composed_state", "composed_value", "composed_arg_shape", "composed_symbol")
+        )
+        lines.append(
+            f"- **Behavioral evidence:** DiffGenome `{behavior.get('artifact_format')}` · "
+            f"runtime `{behavior.get('runtime')}` · observed {counts.get('observed_runtime', 0)} · "
+            f"reconstructed {reconstructed} · static steps executed "
+            f"{counts.get('static_steps_executed', 0)}/{counts.get('static_steps', 0)}"
+        )
     lines.append("")
     lines.append("</details>")
     lines.append("")
@@ -1497,6 +1791,7 @@ def render(result: dict[str, Any], run_url: str | None = None) -> str:
     render_header(result, lines)
     render_change(result, lines)
     render_what_it_may_affect(result, lines)
+    render_behavioral_effect(result, lines)
     render_test_evidence(result, lines)
     render_what_is_still_unknown(result, lines)
     render_review(result, lines)
