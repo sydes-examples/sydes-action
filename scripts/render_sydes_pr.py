@@ -682,6 +682,7 @@ def render_what_it_may_affect(result: dict[str, Any], lines: list[str]) -> None:
     lines.append("")
 
     established, likely, established_more, likely_more = select_representative_paths(result)
+    observed = _observed_paths(result)
     # Non-API area rows (Service logic, Background jobs, External
     # integration, Other, Wider API surface) carry genuinely additional
     # information beyond the routes already shown via paths below. The API
@@ -689,7 +690,7 @@ def render_what_it_may_affect(result: dict[str, Any], lines: list[str]) -> None:
     # avoid showing the same route twice under two different bullets.
     other_area_bullets = [f"{area}: {impact}" for area, impact in summarize_system_impact_areas(result) if area != "API"]
 
-    if not established and not likely and not other_area_bullets:
+    if not observed and not established and not likely and not other_area_bullets:
         # Nothing resolved at all -- this must never read as "nothing is
         # affected". Say plainly that tracing did not reach anything, and
         # cite the real reason when one is available.
@@ -702,6 +703,13 @@ def render_what_it_may_affect(result: dict[str, Any], lines: list[str]) -> None:
             lines.append(f"_{reason}_")
         lines.append("")
         return
+
+    if observed:
+        # strongest evidence first: what the existing tests actually executed
+        lines.append("**Observed in existing tests**")
+        lines.append("")
+        _render_path_block(observed, lines)
+        lines.append("")
 
     if established:
         lines.append("**Established**")
@@ -717,12 +725,12 @@ def render_what_it_may_affect(result: dict[str, Any], lines: list[str]) -> None:
         lines.append("")
 
     if likely:
-        lines.append("**Likely, not fully established**")
+        lines.append("**Possible, not established**")
         lines.append("")
         for label in likely:
             lines.append(f"- {label}")
         if likely_more:
-            lines.append(f"_…and {likely_more} more likely impact(s) in the full result._")
+            lines.append(f"_…and {likely_more} more possible impact(s) in the full result._")
         lines.append("")
 
     for bullet in other_area_bullets:
@@ -973,6 +981,34 @@ def _runtime_selection_line(sel: Any) -> str | None:
     return f"_Tests selected automatically: {len(reasons)} file(s) ({', '.join(parts)})._"
 
 
+def _observed_paths(result: dict[str, Any]) -> list[list[Any]]:
+    behavior = _behavior_available(result)
+    rt = (behavior or {}).get("runtime_evidence")
+    if not isinstance(rt, dict):
+        return []
+    return [p for p in _as_list(rt.get("paths")) if isinstance(p, list) and p][:_MAX_RUNTIME_PATHS]
+
+
+def _render_path_block(paths: list[list[Any]], lines: list[str]) -> None:
+    """Execution paths as an indented ladder; changed steps marked in an aligned column."""
+    rows = [
+        [
+            (("" if j == 0 else "  → ") + str(step.get("name") if isinstance(step, dict) else step),
+             isinstance(step, dict) and bool(step.get("changed")))
+            for j, step in enumerate(path)
+        ]
+        for path in paths
+    ]
+    width = max(len(text) for row in rows for text, _ in row)
+    lines.append("```text")
+    for i, row in enumerate(rows):
+        if i:
+            lines.append("")
+        for text, changed in row:
+            lines.append(f"{text.ljust(width)}   changed" if changed else text)
+    lines.append("```")
+
+
 def render_runtime_evidence(result: dict[str, Any], rt: dict[str, Any], lines: list[str]) -> None:
     """`behavioral.runtime_evidence` (DiffGenome `diffgenome-runtime/1`, summarized by Sydes):
     what the repository's existing tests executed of the change, in a form a developer can
@@ -999,44 +1035,6 @@ def render_runtime_evidence(result: dict[str, Any], rt: dict[str, Any], lines: l
         lines.append(selection)
         lines.append("")
 
-    paths = [p for p in _as_list(rt.get("paths")) if isinstance(p, list) and p][:_MAX_RUNTIME_PATHS]
-    if paths:
-        lines.append("**Execution paths observed**")
-        lines.append("")
-        lines.append("```text")
-        rows = [
-            [
-                (("" if j == 0 else "  → ") + str(step.get("name") if isinstance(step, dict) else step),
-                 isinstance(step, dict) and bool(step.get("changed")))
-                for j, step in enumerate(path)
-            ]
-            for path in paths
-        ]
-        width = max(len(text) for row in rows for text, _ in row)
-        for i, row in enumerate(rows):
-            if i:
-                lines.append("")
-            for text, changed in row:
-                lines.append(f"{text.ljust(width)}   changed" if changed else text)
-        lines.append("```")
-        observed_only = [
-            str(i.get("label")) for i in _as_list(result.get("accepted_impacts"))
-            if isinstance(i, dict) and i.get("provenance") == "runtime_observed"
-        ]
-        if observed_only:
-            names = ", ".join(f"`{_clean(n, limit=60)}`" for n in observed_only[:_MAX_RUNTIME_NAMES])
-            lines.append(f"_{names}: not in the static call graph; seen only at runtime._")
-        lines.append("")
-
-    if ran:
-        lines.append("**Most exercised changed functions**")
-        for f in ran[:_MAX_RUNTIME_TOP]:
-            n = int(f.get("tests_total") or 0)
-            lines.append(f"- `{f.get('name')}` — {n} test{'s' if n != 1 else ''}")
-        if len(ran) > _MAX_RUNTIME_TOP:
-            lines.append(f"- … {len(ran) - _MAX_RUNTIME_TOP} more executed")
-        lines.append("")
-
     if not_ran:
         lines.append("**Not exercised**")
         for f in not_ran[:_MAX_RUNTIME_NAMES]:
@@ -1053,11 +1051,11 @@ def render_runtime_evidence(result: dict[str, Any], rt: dict[str, Any], lines: l
             for outcome in ("true", "false"):
                 if int(site.get(outcome) or 0) == 0:
                     conditions.append(
-                        f"- `{_clean(site.get('predicate'), limit=70)}` never {outcome} · "
+                        f"- never {outcome}: `{_clean(site.get('predicate'), limit=90)}` · "
                         f"{_short_path(f.get('file'))}:{site.get('line')}"
                     )
     if conditions:
-        lines.append("**Changed conditions not exercised both ways**")
+        lines.append("**Changed branches not exercised**")
         lines.extend(conditions[:_MAX_RUNTIME_CONDITIONS])
         if len(conditions) > _MAX_RUNTIME_CONDITIONS:
             lines.append(f"- … {len(conditions) - _MAX_RUNTIME_CONDITIONS} more")
@@ -1070,6 +1068,18 @@ def render_runtime_evidence(result: dict[str, Any], rt: dict[str, Any], lines: l
     if mocked:
         lines.append("**Only reached through a mock**")
         lines.extend(mocked[:_MAX_RUNTIME_CONDITIONS])
+        lines.append("")
+
+    if ran:
+        lines.append("<details><summary>All runtime mappings</summary>")
+        lines.append("")
+        for f in ran:
+            n = int(f.get("tests_total") or 0)
+            roots = [str(r) for r in _as_list(f.get("entry_roots"))][:2]
+            via = f" · entered via {', '.join(f'`{r}`' for r in roots)}" if roots else ""
+            lines.append(f"- `{f.get('name')}` — {n} test{'s' if n != 1 else ''}{via}")
+        lines.append("")
+        lines.append("</details>")
         lines.append("")
 
 
@@ -1232,40 +1242,41 @@ def render_test_evidence(result: dict[str, Any], lines: list[str]) -> None:
     lines.append("| --- | --- |")
     behavior = _behavior_available(result)
     executing = [str(t) for t in _as_list((behavior or {}).get("tests_on_behavioral_path"))]
+    runtime = (behavior or {}).get("runtime_evidence")
+    exercised = (
+        runtime.get("tests_exercised") if isinstance(runtime, dict) else None
+    )
+    if not isinstance(exercised, int):
+        exercised = len(executing)
+    # Executing the changed code and asserting its behavior are separate claims: one row each.
+    if isinstance(_get(result, "behavioral", default=None), dict):
+        if behavior is None:
+            lines.append("| Existing tests exercise the changed code | ⬛ Unknown (runtime evidence unavailable) |")
+        elif exercised:
+            in_diff = _behavior_tests_in_diff(result)
+            incl = f" (incl. {len(in_diff)} changed in this PR)" if in_diff else ""
+            lines.append(f"| Existing tests exercise the changed code | ✅ {exercised} test(s){incl} |")
+        else:
+            lines.append("| Existing tests exercise the changed code | ❌ None reach it |")
     if has_mapped_test:
-        lines.append("| Relevant regression test | ✅ Found |")
-    elif executing:
-        in_diff = _behavior_tests_in_diff(result)
-        incl = f", incl. {len(in_diff)} changed in this diff" if in_diff else ""
-        lines.append(
-            f"| Relevant regression test | 🟡 {len(executing)} test(s) execute the change{incl}; "
-            "none mapped as asserting it |"
-        )
+        lines.append("| Test asserting the changed behavior | ✅ Found |")
+    elif exercised:
+        lines.append("| Test asserting the changed behavior | 🟡 Not identified |")
     else:
-        lines.append("| Relevant regression test | ❌ Not found |")
+        lines.append("| Test asserting the changed behavior | ❌ Not found |")
     for label, obligation in _category_status_rows(relevant):
         lines.append(f"| {label} | {_short_status_phrase(obligation)} |")
 
     counts = _get(result, "summary", "counts", default={})
     executed = counts.get("tests_executed", 0) or _executed_test_count(result)
     if executed:
-        lines.append(f"| Test executed by Sydes | ✅ Yes — {executed} test(s) run |")
+        lines.append(f"| Tests run by Sydes | ✅ Yes — {executed} test(s) run |")
     else:
         disabled = any(
             "no-run-tests" in str(note) for note in _as_list(_get(result, "notes", default=[]))
         )
         exec_result = "⬛ Not run (`--no-run-tests`)" if disabled else "⬛ Not run"
-        lines.append(f"| Test executed by Sydes | {exec_result} |")
-
-    raw_behavior = _get(result, "behavioral", default=None)
-    if isinstance(raw_behavior, dict):
-        if behavior is not None:
-            if executing:
-                lines.append(f"| Executed in isolation (DiffGenome) | ✅ {len(executing)} test(s) ran the changed code |")
-            else:
-                lines.append("| Executed in isolation (DiffGenome) | ❌ No test reaches the changed code |")
-        else:
-            lines.append("| Executed in isolation (DiffGenome) | ⬛ Unavailable |")
+        lines.append(f"| Tests run by Sydes | {exec_result} |")
 
     # Route-coverage completeness gets its own top-level row -- it's exactly
     # the kind of "how much do I trust this" signal a reviewer wants near
@@ -1881,6 +1892,15 @@ def render_details(result: dict[str, Any], lines: list[str]) -> None:
     behavior = _behavior_available(result)
     runtime = behavior.get("runtime_evidence") if behavior is not None else None
     if isinstance(runtime, dict) and _as_list(runtime.get("functions")):
+        observed_only = [
+            str(i.get("label")) for i in _as_list(result.get("accepted_impacts"))
+            if isinstance(i, dict) and i.get("provenance") == "runtime_observed"
+        ]
+        if observed_only:
+            lines.append(
+                "- **Reached only through observed calls:** "
+                + ", ".join(f"`{_clean(n, limit=60)}`" for n in observed_only[:_MAX_RUNTIME_NAMES])
+            )
         lines.append(
             f"- **Runtime evidence:** DiffGenome `{runtime.get('format')}` · "
             f"{len(_as_list(runtime.get('gaps')))} runtime gap(s) · not reported: "
