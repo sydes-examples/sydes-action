@@ -117,7 +117,7 @@ def test_established_only_shows_no_likely_section():
         accepted_impacts=[{"id": "flow:a", "status": "proven"}],
     )
     out = r.render(result)
-    assert "(likely, not fully established)" not in out
+    assert "(possible, not established)" not in out
     assert "PetService.create" in out
 
 
@@ -156,7 +156,7 @@ def test_not_fully_traced_is_explicit_not_silent():
     # No bare (established) bullet -- every backtick-wrapped bullet here
     # must carry the inline "(likely, ...)" qualifier.
     assert re.search(r"^- `[^`]+`$", section, re.MULTILINE) is None
-    assert "(likely, not fully established)" in section
+    assert "(possible, not established)" in section
     assert "email verification task processing" in section
 
 
@@ -246,7 +246,7 @@ def test_supporting_evidence_is_shown_instead_of_none_identified():
     assert "| Test asserting the changed behavior | ❌ Not found |" in section
     # Real evidence exists somewhere, but none of it verifies the changed
     # behavior directly -- the before-merge nudge should still fire.
-    assert "- Add or run a test covering the affected behavior before merging." in out
+    assert "- Add or identify a test that asserts the changed behavior." in out
 
 
 # ---------------------------------------------------------------------------
@@ -424,7 +424,7 @@ def test_verifying_tests_shown_as_the_primary_count():
     out = r.render(result)
     # Real verifying evidence found (via summary.counts) -- the before-merge
     # nudge, which reads that same aggregate directly, must not fire.
-    assert "- Add or run a test covering the affected behavior before merging." not in out
+    assert "- Add or identify a test that asserts the changed behavior." not in out
 
 
 # ---------------------------------------------------------------------------
@@ -700,7 +700,7 @@ def test_wider_api_surface_shown_for_boundary_beyond_traced_route():
     out = r.render(result)
     assert (
         "- Wider API surface: JWT authentication filter validates tokens including grace "
-        "period logic (likely, not fully established)"
+        "period logic (possible, not established)"
     ) in out
     assert "Verify the changed behavior on the wider API surface before merging." in out
 
@@ -817,7 +817,7 @@ def test_before_merge_recommends_a_test_when_none_identified_and_impact_found():
         accepted_impacts=[{"id": "flow:a", "status": "proven"}],
     )
     out = r.render(result)
-    assert "- Add or run a test covering the affected behavior before merging." in out
+    assert "- Add or identify a test that asserts the changed behavior." in out
 
 
 # ---------------------------------------------------------------------------
@@ -1862,7 +1862,9 @@ def test_behavioral_section_real_simplebank_result() -> None:
     assert rows[0].startswith("| `transfer_test.go::TestTransferAPI/InsufficientBalance`")
     assert all("| No | Yes, isolated (DiffGenome) |" in row for row in rows)
     assert "Add or run a test covering the affected behavior" not in md
-    assert "none is mapped as asserting the new behavior" in md
+    # the fact is stated once (Test evidence); What is still unknown carries only the action
+    assert "none is mapped as asserting" not in md
+    assert "- Add or identify a test that asserts the changed behavior." in md
     assert "**Behavioral evidence:** DiffGenome `diffgenome-change/1`" in md
     assert r.render(_load("real_behavioral_diffgenome.json")) == md  # deterministic
 
@@ -1878,7 +1880,7 @@ def test_behavioral_unavailable_is_said_never_no_impact() -> None:
     assert "this is not evidence of no impact" in md
     assert "| Existing tests exercise the changed code | ⬛ Unknown (runtime evidence unavailable) |" in md
     assert "| Test asserting the changed behavior | ❌ Not found |" in md
-    assert "Add or run a test covering the affected behavior before merging." in md
+    assert "Add or identify a test that asserts the changed behavior." in md
 
 
 def test_behavioral_absent_renders_exactly_as_before() -> None:

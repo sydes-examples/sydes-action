@@ -25,7 +25,7 @@ the whole result.
 
 Confidence is never flattened away by this consolidation: an established
 fact is a plain bullet; anything inferred or not fully established keeps an
-explicit inline qualifier (e.g. "(likely, not fully established)"), and a
+explicit inline qualifier (e.g. "(possible, not established)"), and a
 pre-existing, unrelated route-level gap keeps "(pre-existing on this
 route)" rather than being merged indistinguishably with a gap in the change
 itself.
@@ -356,7 +356,7 @@ def _describe_group(items: list[dict[str, Any]]) -> str:
     established = [b for b in items if _boundary_status(b) == "proven"]
     likely = [b for b in items if _boundary_status(b) != "proven"]
     if len(items) == 1:
-        qualifier = "established" if established else "likely, not fully established"
+        qualifier = "established" if established else "possible, not established"
         return f"{_boundary_display_label(items[0])} ({qualifier})"
     parts: list[str] = []
     if established:
@@ -1648,16 +1648,9 @@ def render_what_is_still_unknown(result: dict[str, Any], lines: list[str]) -> No
     before_merge_bullets: list[str] = []
     if wider_areas:
         before_merge_bullets.append("Verify the changed behavior on the wider API surface before merging.")
-    executing_tests = [
-        str(t) for t in _as_list((_behavior_available(result) or {}).get("tests_on_behavioral_path"))
-    ]
-    if verifying_tests == 0 and has_any_impact and executing_tests:
-        before_merge_bullets.append(
-            f"{len(executing_tests)} existing test(s) execute the changed code, but none is mapped as "
-            "asserting the new behavior; confirm one asserts it before merging."
-        )
-    elif verifying_tests == 0 and has_any_impact:
-        before_merge_bullets.append("Add or run a test covering the affected behavior before merging.")
+    if verifying_tests == 0 and has_any_impact:
+        # the action only: what existing tests execute vs assert is already in Test evidence
+        before_merge_bullets.append("Add or identify a test that asserts the changed behavior.")
 
     coverage_bullets = list(_route_prefix_notes(result))
     mutation_bullets = _mutation_gap_bullets(result)
