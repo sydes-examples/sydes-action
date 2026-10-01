@@ -141,6 +141,14 @@ on:
           behavior change.
         type: string
         default: ""
+      ai_recovery:
+        description: >-
+          Run Sydes' AI recovery pass (on by default, as before). false
+          passes `--no-ai-recovery`: the first-pass analysis, runtime
+          evidence and rendering are unchanged; the comment says recovery
+          was disabled.
+        type: boolean
+        default: true
       timeout_minutes:
         description: >-
           Job timeout. Large repositories with AI recovery enabled can need
@@ -330,6 +338,9 @@ jobs:
           fi
           if [ "${{ inputs.recovery_graph_path_search }}" = "true" ]; then
             EXTRA_FLAGS+=(--recovery-graph-path-search)
+          fi
+          if [ "${{ inputs.ai_recovery }}" != "true" ]; then
+            EXTRA_FLAGS+=(--no-ai-recovery)
           fi
           if [ "${{ inputs.run_tests }}" != "true" ]; then
             EXTRA_FLAGS+=(--no-run-tests)
