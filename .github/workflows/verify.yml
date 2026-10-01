@@ -113,6 +113,41 @@ on:
           execute a test to mean anything.
         type: boolean
         default: false
+      sydes_git_ref:
+        description: >-
+          Install Sydes from github.com/sydes-ai/sydes at this ref (branch,
+          tag or commit) with its own uv.lock (`uv sync --frozen`), instead
+          of from PyPI. For validating an unreleased integration branch;
+          takes precedence over `sydes_ref`. Empty (default): PyPI install.
+        type: string
+        default: ""
+      runner:
+        description: >-
+          Runner label. DiffGenome only executes target tests under an OS
+          sandbox it supports (macOS `sandbox-exec` in 0.1.0), so runtime
+          evidence needs a macOS runner (e.g. "macos-15"); on Linux it
+          refuses to run and the comment says so.
+        type: string
+        default: "ubuntu-24.04"
+      runtime_evidence_args:
+        description: >-
+          DiffGenome runtime configuration (forwarded to `diffgenome change`
+          via `--behavioral-args`), e.g. "--runtime go --test-root api
+          --tests ./api/". When set, Sydes runs with `--behavioral-map
+          diffgenome --runtime-evidence auto`: the repository's existing
+          tests run against the change and the observed facts feed
+          reachability, test mapping, verification gaps and AI recovery.
+          Empty (default): no runtime evidence; existing callers see no
+          behavior change.
+        type: string
+        default: ""
+      runtime_setup:
+        description: >-
+          Shell commands run before analysis when `runtime_evidence_args`
+          is set: whatever the repository's tests need (services, a
+          virtualenv). Runs in the checked-out repository.
+        type: string
+        default: ""
     secrets:
       OPENAI_API_KEY:
         description: OpenAI key for `sydes verify-change`'s LLM calls.
@@ -125,8 +160,8 @@ permissions:
 jobs:
   verify-change:
     name: Sydes verify-change
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 45
     # workflow_call jobs run inside the caller's workflow run, so this groups
     # correctly per-PR even though the group name is defined here.
     concurrency:
@@ -190,7 +225,24 @@ jobs:
           python -m pytest --version >/dev/null 2>&1 || pip install pytest
           set -e
 
+      - name: Set up uv
+        if: inputs.sydes_git_ref != ''
+        uses: astral-sh/setup-uv@v6
+
+      # Checked out under RUNNER_TEMP, outside the tree Sydes analyzes (see the
+      # renderer checkout below for why that matters).
+      - name: Install Sydes from git (locked)
+        if: inputs.sydes_git_ref != ''
+        env:
+          SYDES_GIT_REF: ${{ inputs.sydes_git_ref }}
+        run: |
+          git clone -q https://github.com/sydes-ai/sydes "$RUNNER_TEMP/sydes"
+          git -C "$RUNNER_TEMP/sydes" checkout -q "$SYDES_GIT_REF"
+          (cd "$RUNNER_TEMP/sydes" && uv sync --frozen --no-dev --python "$(command -v python)")
+          echo "$RUNNER_TEMP/sydes/.venv/bin" >> "$GITHUB_PATH"
+
       - name: Install Sydes
+        if: inputs.sydes_git_ref == ''
         run: |
           python -m pip install --upgrade pip
           if [ -n "${{ inputs.sydes_ref }}" ]; then
@@ -199,6 +251,57 @@ jobs:
             python -m pip install --upgrade sydes
           fi
           sydes --version
+
+      # DiffGenome runs `go test` offline inside its sandbox: the toolchain and
+      # the module cache must be in place first.
+      - name: Set up Go (runtime evidence)
+        if: inputs.runtime_evidence_args != '' && hashFiles('go.mod') != ''
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Download Go modules (runtime evidence)
+        if: inputs.runtime_evidence_args != '' && hashFiles('go.mod') != ''
+        run: go mod download
+
+      - name: Prepare test environment (runtime evidence)
+        if: inputs.runtime_evidence_args != '' && inputs.runtime_setup != ''
+        run: ${{ inputs.runtime_setup }}
+
+      # What actually ran: recorded in the job summary and the uploaded artifact,
+      # so a reviewer can tell the published DiffGenome package was used.
+      - name: Record provenance
+        env:
+          SYDES_GIT_REF: ${{ inputs.sydes_git_ref }}
+        run: |
+          SYDES_PY="$(dirname "$(command -v sydes)")/python"
+          {
+            echo "### Sydes run provenance"
+            echo '```text'
+            echo "runner:            $RUNNER_OS $RUNNER_ARCH ($ImageOS $ImageVersion)"
+            echo "python:            $("$SYDES_PY" -V 2>&1)"
+            echo "sydes:             $(sydes --version 2>&1 | head -1)"
+            if [ -n "$SYDES_GIT_REF" ]; then
+              echo "sydes git ref:     $SYDES_GIT_REF"
+              echo "sydes commit:      $(git -C "$RUNNER_TEMP/sydes" rev-parse HEAD)"
+            fi
+            "$SYDES_PY" - <<'PY' || echo "diffgenome:        not installed"
+          import importlib.metadata as md, json, pathlib, diffgenome
+          dist = md.distribution("diffgenome")
+          direct = dist.read_text("direct_url.json")
+          print(f"diffgenome:        {dist.version} (import: {pathlib.Path(diffgenome.__file__).parent})")
+          print(f"diffgenome source: {json.loads(direct)['url'] if direct else 'package index (no direct/local URL)'}")
+          print(f"diffgenome installer: {(dist.read_text('INSTALLER') or '?').strip()}")
+          PY
+            echo "diffgenome cli:    $(command -v diffgenome) -> $(diffgenome --version 2>&1)"
+            if [ -n "$SYDES_GIT_REF" ]; then
+              echo "uv.lock entry:"
+              grep -A3 '^name = "diffgenome"' "$RUNNER_TEMP/sydes/uv.lock" | grep -E 'version|source' | sed 's/^/  /'
+              grep -A12 '^name = "diffgenome"' "$RUNNER_TEMP/sydes/uv.lock" | grep -o 'https://files.pythonhosted.org[^"]*\.whl' | sed 's/^/  /'
+            fi
+            echo '```'
+          } | tee sydes-provenance.md >> "$GITHUB_STEP_SUMMARY"
+          cat sydes-provenance.md
 
       - name: Run Sydes verify-change
         env:
@@ -209,6 +312,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           REPO_ALIAS: ${{ inputs.repo_alias }}
           MODEL: ${{ inputs.model }}
+          RUNTIME_EVIDENCE_ARGS: ${{ inputs.runtime_evidence_args }}
         run: |
           EXTRA_FLAGS=()
           if [ "${{ inputs.recovery_route_context }}" = "true" ]; then
@@ -223,16 +327,28 @@ jobs:
           if [ "${{ inputs.mutation_verify }}" = "true" ]; then
             EXTRA_FLAGS+=(--mutation-verify)
           fi
-          sydes verify-change \
-            --base "$BASE_SHA" \
-            --repo "${REPO_ALIAS}=." \
-            --llm-policy auto \
-            --impact-guide auto \
-            --code-review \
-            --model "$MODEL" \
-            --verbose \
-            "${EXTRA_FLAGS[@]}" \
-            --json sydes-result.json
+          if [ -n "$RUNTIME_EVIDENCE_ARGS" ]; then
+            EXTRA_FLAGS+=(--behavioral-map diffgenome --behavioral-args "$RUNTIME_EVIDENCE_ARGS"
+                          --behavioral-out "$RUNNER_TEMP/diffgenome" --runtime-evidence auto)
+          fi
+          CMD=(sydes verify-change
+            --base "$BASE_SHA"
+            --repo "${REPO_ALIAS}=."
+            --llm-policy auto
+            --impact-guide auto
+            --code-review
+            --model "$MODEL"
+            --verbose
+            "${EXTRA_FLAGS[@]}"
+            --json sydes-result.json)
+          { echo; echo "command: $(printf '%q ' "${CMD[@]}")"; } | tee -a sydes-provenance.md
+          START=$(date +%s)
+          set +e
+          "${CMD[@]}"
+          STATUS=$?
+          set -e
+          echo "wall time: $(( $(date +%s) - START ))s, exit $STATUS" | tee -a sydes-provenance.md
+          exit $STATUS
 
       # A separate, pinned checkout of the renderer — it lives here, not in
       # the repository under test. Deliberately checked out AFTER "Run Sydes
@@ -317,4 +433,6 @@ jobs:
             sydes-result.ai_recovery.json
             sydes-comment.md
             sydes-diagnostics.json
+            sydes-provenance.md
+            ${{ runner.temp }}/diffgenome/diffgenome-change.json
           if-no-files-found: warn

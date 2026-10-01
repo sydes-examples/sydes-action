@@ -947,6 +947,90 @@ def _behavior_entry_chains(ev: dict[str, Any], changed: set[str]) -> list[list[s
     return [c for c in chains if not any(o != c and o[: len(c)] == c for o in chains)]
 
 
+_MAX_RUNTIME_ROWS = 8
+_MAX_RUNTIME_NAMES = 8
+_MAX_RUNTIME_GAPS = 5
+
+
+def _runtime_test_name(test: str) -> str:
+    return test.split("::")[-1] or test
+
+
+def _runtime_exits(exits: dict[str, Any]) -> str:
+    parts = []
+    for kind, n in sorted(exits.items(), key=lambda kv: -int(kv[1] or 0)):
+        text = str(kind)
+        if text.startswith("returned-error:"):
+            text = "error `" + text.split(":", 2)[-1] + "`"
+        elif text.startswith("raised:"):
+            text = "raised `" + text.split(":", 2)[-1] + "`"
+        parts.append(f"{text} {n}")
+    return " · ".join(parts) or "—"
+
+
+def render_runtime_evidence(result: dict[str, Any], rt: dict[str, Any], lines: list[str]) -> None:
+    """`behavioral.runtime_evidence` (DiffGenome `diffgenome-runtime/1`, summarized by Sydes):
+    what the repository's existing tests executed of the changed functions. Observed facts
+    only; executing is not asserting, which Test evidence covers."""
+    functions = [f for f in _as_list(rt.get("functions")) if isinstance(f, dict)]
+    ran = sorted((f for f in functions if f.get("executed")), key=lambda f: -int(f.get("tests_total") or 0))
+    not_ran = [f for f in functions if not f.get("executed")]
+    scope = _clean(rt.get("test_scope") or "the existing tests", limit=120)
+    lines.append("### Runtime evidence")
+    lines.append("")
+    lines.append(
+        f"_The repository's existing tests were run against the change (`{scope}`, "
+        f"{rt.get('executions', 0)} test run(s)). Shows what executed, not what is asserted._"
+    )
+    lines.append("")
+    lines.append(f"**{len(ran)} of {len(functions)} changed function(s) ran in existing tests.**")
+    lines.append("")
+    if ran:
+        lines.append("| Changed function | Ran in | Entered via | Exits |")
+        lines.append("| --- | --- | --- | --- |")
+        for f in ran[:_MAX_RUNTIME_ROWS]:
+            tests = [_runtime_test_name(str(t)) for t in _as_list(f.get("tests"))]
+            total = int(f.get("tests_total") or len(tests))
+            named = ", ".join(f"`{t}`" for t in tests[:2])
+            more = f" +{total - 2}" if total > 2 else ""
+            roots = [str(r) for r in _as_list(f.get("entry_roots"))]
+            via = ", ".join(f"`{r}`" for r in roots[:2]) if roots else "tests (direct)"
+            exits = f.get("exits") if isinstance(f.get("exits"), dict) else {}
+            lines.append(
+                f"| `{f.get('name')}` | {total} test(s): {named}{more} | {via} | {_runtime_exits(exits)} |"
+            )
+        if len(ran) > _MAX_RUNTIME_ROWS:
+            lines.append(f"| … +{len(ran) - _MAX_RUNTIME_ROWS} more | | | |")
+        lines.append("")
+    observed_only = [
+        i for i in _as_list(result.get("accepted_impacts"))
+        if isinstance(i, dict) and i.get("provenance") == "runtime_observed"
+    ]
+    if observed_only:
+        names = ", ".join(f"`{_clean(i.get('label'), limit=80)}`" for i in observed_only[:_MAX_RUNTIME_NAMES])
+        lines.append(
+            f"**Reached only through calls observed at runtime:** {names}. The static call graph "
+            "has no path to these; the existing tests executed one (e.g. registry or dynamic dispatch)."
+        )
+        lines.append("")
+    if not_ran:
+        names = ", ".join(f"`{f.get('name')}`" for f in not_ran[:_MAX_RUNTIME_NAMES])
+        more = f" +{len(not_ran) - _MAX_RUNTIME_NAMES} more" if len(not_ran) > _MAX_RUNTIME_NAMES else ""
+        lines.append(f"**Not run by any existing test ({len(not_ran)}):** {names}{more}")
+        lines.append("")
+    gaps = [
+        g for g in _as_list(rt.get("gaps"))
+        if isinstance(g, dict) and ":function_not_executed:" not in str(g.get("id", ""))
+    ]
+    if gaps:
+        lines.append("**Runtime gaps**")
+        for g in gaps[:_MAX_RUNTIME_GAPS]:
+            lines.append(f"- {_clean(g.get('behavior'), limit=220)}")
+        if len(gaps) > _MAX_RUNTIME_GAPS:
+            lines.append(f"- … +{len(gaps) - _MAX_RUNTIME_GAPS} more in the full result")
+        lines.append("")
+
+
 def render_behavioral_effect(result: dict[str, Any], lines: list[str]) -> None:
     raw = _get(result, "behavioral", default=None)
     if not isinstance(raw, dict):
@@ -960,6 +1044,12 @@ def render_behavioral_effect(result: dict[str, Any], lines: list[str]) -> None:
             "this is not evidence of no impact._"
         )
         lines.append("")
+        return
+    runtime = raw.get("runtime_evidence")
+    if isinstance(runtime, dict) and _as_list(runtime.get("functions")):
+        # The runtime-evidence contract supersedes the older graph view: one section,
+        # stated per changed function, instead of two overlapping ones.
+        render_runtime_evidence(result, runtime, lines)
         return
     ev = raw
     nodes = {str(n.get("id")): n for n in _as_list(ev.get("nodes")) if isinstance(n, dict)}
@@ -1747,7 +1837,14 @@ def render_details(result: dict[str, Any], lines: list[str]) -> None:
     lines.append("")
     lines.append(f"- {line}")
     behavior = _behavior_available(result)
-    if behavior is not None:
+    runtime = behavior.get("runtime_evidence") if behavior is not None else None
+    if isinstance(runtime, dict) and _as_list(runtime.get("functions")):
+        lines.append(
+            f"- **Runtime evidence:** DiffGenome `{runtime.get('format')}` · "
+            f"{len(_as_list(runtime.get('gaps')))} runtime gap(s) · not reported: "
+            + "; ".join(_clean(x, limit=80) for x in _as_list(runtime.get("not_reported")))
+        )
+    elif behavior is not None:
         counts = behavior.get("counts") if isinstance(behavior.get("counts"), dict) else {}
         reconstructed = sum(
             int(counts.get(k, 0) or 0)

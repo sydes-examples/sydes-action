@@ -1888,3 +1888,19 @@ def test_behavioral_absent_renders_exactly_as_before() -> None:
             obligation["supporting_tests"] = []
     md = r.render(result)
     assert "Behavioral" not in md and "DiffGenome" not in md
+
+
+def test_runtime_evidence_section_real_simplebank_result() -> None:
+    """A real `--runtime-evidence auto` result (simplebank #103, PyPI DiffGenome 0.1.0), plus one
+    synthetic runtime-only impact to pin the provenance line."""
+    body = r.render(_load("real_runtime_evidence_simplebank.json"))
+    section = body.split("### Runtime evidence", 1)[1].split("### Test evidence", 1)[0]
+    assert "**5 of 12 changed function(s) ran in existing tests.**" in section
+    assert "| `Server.UpdateUser` | 7 test(s): " in section and "error `*status.Error` 5" in section
+    assert "`TestUpdateUserAPI/ExpiredToken`" in section
+    assert "**Not run by any existing test (7):** `Server.loginUser`" in section
+    assert "only through a stand-in" in section and "never observed true" in section
+    assert "**Reached only through calls observed at runtime:** `Dispatcher.dispatch`" in section
+    # the runtime section replaces the older graph view; it does not sit beside it
+    assert "### Behavioral effect" not in body
+    assert "- **Runtime evidence:** DiffGenome `diffgenome-runtime/1` · 9 runtime gap(s)" in body
