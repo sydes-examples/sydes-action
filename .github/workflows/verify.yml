@@ -141,6 +141,12 @@ on:
           behavior change.
         type: string
         default: ""
+      timeout_minutes:
+        description: >-
+          Job timeout. Large repositories with AI recovery enabled can need
+          more than the default (Baserow: ~8 min analysis + 40+ min recovery).
+        type: number
+        default: 45
       runtime_setup:
         description: >-
           Shell commands run before analysis when `runtime_evidence_args`
@@ -161,7 +167,7 @@ jobs:
   verify-change:
     name: Sydes verify-change
     runs-on: ${{ inputs.runner }}
-    timeout-minutes: 45
+    timeout-minutes: ${{ inputs.timeout_minutes }}
     # workflow_call jobs run inside the caller's workflow run, so this groups
     # correctly per-PR even though the group name is defined here.
     concurrency:
