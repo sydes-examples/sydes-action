@@ -1891,16 +1891,20 @@ def test_behavioral_absent_renders_exactly_as_before() -> None:
 
 
 def test_runtime_evidence_section_real_simplebank_result() -> None:
-    """A real `--runtime-evidence auto` result (simplebank #103, PyPI DiffGenome 0.1.0), plus one
-    synthetic runtime-only impact to pin the provenance line."""
+    """A real runtime-evidence result (simplebank #103, PyPI DiffGenome), plus a synthetic runtime-only
+    impact and test-selection record: a developer-scannable summary, not per-test tables."""
     body = r.render(_load("real_runtime_evidence_simplebank.json"))
     section = body.split("### Runtime evidence", 1)[1].split("### Test evidence", 1)[0]
-    assert "**5 of 12 changed function(s) ran in existing tests.**" in section
-    assert "| `Server.UpdateUser` | 7 test(s): " in section and "error `*status.Error` 5" in section
-    assert "`TestUpdateUserAPI/ExpiredToken`" in section
-    assert "**Not run by any existing test (7):** `Server.loginUser`" in section
-    assert "only through a stand-in" in section and "never observed true" in section
-    assert "**Reached only through calls observed at runtime:** `Dispatcher.dispatch`" in section
-    # the runtime section replaces the older graph view; it does not sit beside it
+    assert "5 / 12 changed functions executed · 7 existing test(s) exercised the change" in section
+    assert "_Tests selected automatically: 1 file(s) (1 changed in this PR)._" in section
+    assert "**Execution paths observed**" in section
+    assert "Server.UpdateUser" in section and "  → Server.authorizeUser" in section and "  → hasPermission" in section
+    assert section.count("   changed") >= 3
+    assert "_`Dispatcher.dispatch`: not in the static call graph; seen only at runtime._" in section
+    assert "- `Server.UpdateUser` — 7 tests" in section
+    assert "**Not exercised**\n- `Server.loginUser`" in section
+    assert "never true · gapi/authorization.go:45" in section
+    assert "**Only reached through a mock**\n- `Server.UpdateUser` → `UpdateUser`" in section
+    # no per-test tables or exit breakdowns in the comment
+    assert "TestUpdateUserAPI/" not in section and "| Changed function |" not in section
     assert "### Behavioral effect" not in body
-    assert "- **Runtime evidence:** DiffGenome `diffgenome-runtime/1` · 9 runtime gap(s)" in body

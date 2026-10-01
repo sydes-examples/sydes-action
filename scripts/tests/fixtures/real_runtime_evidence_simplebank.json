@@ -15754,6 +15754,33 @@
      "stand_ins": {}
     }
    ],
+   "paths": [
+    [
+     {
+      "name": "Server.UpdateUser",
+      "changed": true
+     },
+     {
+      "name": "Server.authorizeUser",
+      "changed": true
+     },
+     {
+      "name": "hasPermission",
+      "changed": true
+     }
+    ],
+    [
+     {
+      "name": "PasetoMaker.CreateToken",
+      "changed": true
+     },
+     {
+      "name": "NewPayload",
+      "changed": true
+     }
+    ]
+   ],
+   "tests_exercised": 7,
    "gaps": [
     {
      "id": "runtime:function_not_executed:0",
@@ -15859,7 +15886,18 @@
     "values (only type shapes and opaque fingerprints are recorded)",
     "except-handler coverage (handlers are not decision sites)",
     "per-line coverage"
-   ]
+   ],
+   "test_selection": {
+    "mode": "auto",
+    "files": [
+     "gapi/rpc_update_user_test.go"
+    ],
+    "reasons": {
+     "gapi/rpc_update_user_test.go": "changed in this diff"
+    },
+    "candidates": 1,
+    "budget": 10
+   }
   }
  },
  "known_routes": [

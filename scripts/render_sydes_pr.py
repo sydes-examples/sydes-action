@@ -947,87 +947,129 @@ def _behavior_entry_chains(ev: dict[str, Any], changed: set[str]) -> list[list[s
     return [c for c in chains if not any(o != c and o[: len(c)] == c for o in chains)]
 
 
-_MAX_RUNTIME_ROWS = 8
+_MAX_RUNTIME_PATHS = 3
+_MAX_RUNTIME_TOP = 5
 _MAX_RUNTIME_NAMES = 8
-_MAX_RUNTIME_GAPS = 5
+_MAX_RUNTIME_CONDITIONS = 3
 
 
-def _runtime_test_name(test: str) -> str:
-    return test.split("::")[-1] or test
+def _short_path(path: Any) -> str:
+    parts = str(path or "").split("/")
+    return "/".join(parts[-2:]) if len(parts) > 2 else str(path or "")
 
 
-def _runtime_exits(exits: dict[str, Any]) -> str:
-    parts = []
-    for kind, n in sorted(exits.items(), key=lambda kv: -int(kv[1] or 0)):
-        text = str(kind)
-        if text.startswith("returned-error:"):
-            text = "error `" + text.split(":", 2)[-1] + "`"
-        elif text.startswith("raised:"):
-            text = "raised `" + text.split(":", 2)[-1] + "`"
-        parts.append(f"{text} {n}")
-    return " · ".join(parts) or "—"
+def _runtime_selection_line(sel: Any) -> str | None:
+    if not isinstance(sel, dict) or sel.get("mode") != "auto":
+        return None
+    reasons = [str(r) for r in (sel.get("reasons") or {}).values()]
+    changed = sum(1 for r in reasons if r == "changed in this diff")
+    calling = sum(1 for r in reasons if r.startswith("calls "))
+    other = len(reasons) - changed - calling
+    parts = [f"{changed} changed in this PR"] if changed else []
+    if calling:
+        parts.append(f"{calling} calling changed functions")
+    if other:
+        parts.append(f"{other} importing changed modules")
+    return f"_Tests selected automatically: {len(reasons)} file(s) ({', '.join(parts)})._"
 
 
 def render_runtime_evidence(result: dict[str, Any], rt: dict[str, Any], lines: list[str]) -> None:
     """`behavioral.runtime_evidence` (DiffGenome `diffgenome-runtime/1`, summarized by Sydes):
-    what the repository's existing tests executed of the changed functions. Observed facts
-    only; executing is not asserting, which Test evidence covers."""
+    what the repository's existing tests executed of the change, in a form a developer can
+    scan. Per-test and per-exit detail stays in the result (and a future dashboard)."""
     functions = [f for f in _as_list(rt.get("functions")) if isinstance(f, dict)]
-    ran = sorted((f for f in functions if f.get("executed")), key=lambda f: -int(f.get("tests_total") or 0))
+    ran = sorted(
+        (f for f in functions if f.get("executed")),
+        key=lambda f: (-int(f.get("tests_total") or 0), str(f.get("name"))),
+    )
     not_ran = [f for f in functions if not f.get("executed")]
-    scope = _clean(rt.get("test_scope") or "the existing tests", limit=120)
+    exercised = rt.get("tests_exercised")
+    if not isinstance(exercised, int):
+        exercised = len({t for f in functions for t in _as_list(f.get("tests"))})
+
     lines.append("### Runtime evidence")
     lines.append("")
     lines.append(
-        f"_The repository's existing tests were run against the change (`{scope}`, "
-        f"{rt.get('executions', 0)} test run(s)). Shows what executed, not what is asserted._"
+        f"{len(ran)} / {len(functions)} changed functions executed · "
+        f"{exercised} existing test(s) exercised the change"
     )
     lines.append("")
-    lines.append(f"**{len(ran)} of {len(functions)} changed function(s) ran in existing tests.**")
-    lines.append("")
+    selection = _runtime_selection_line(rt.get("test_selection"))
+    if selection:
+        lines.append(selection)
+        lines.append("")
+
+    paths = [p for p in _as_list(rt.get("paths")) if isinstance(p, list) and p][:_MAX_RUNTIME_PATHS]
+    if paths:
+        lines.append("**Execution paths observed**")
+        lines.append("")
+        lines.append("```text")
+        rows = [
+            [
+                (("" if j == 0 else "  → ") + str(step.get("name") if isinstance(step, dict) else step),
+                 isinstance(step, dict) and bool(step.get("changed")))
+                for j, step in enumerate(path)
+            ]
+            for path in paths
+        ]
+        width = max(len(text) for row in rows for text, _ in row)
+        for i, row in enumerate(rows):
+            if i:
+                lines.append("")
+            for text, changed in row:
+                lines.append(f"{text.ljust(width)}   changed" if changed else text)
+        lines.append("```")
+        observed_only = [
+            str(i.get("label")) for i in _as_list(result.get("accepted_impacts"))
+            if isinstance(i, dict) and i.get("provenance") == "runtime_observed"
+        ]
+        if observed_only:
+            names = ", ".join(f"`{_clean(n, limit=60)}`" for n in observed_only[:_MAX_RUNTIME_NAMES])
+            lines.append(f"_{names}: not in the static call graph; seen only at runtime._")
+        lines.append("")
+
     if ran:
-        lines.append("| Changed function | Ran in | Entered via | Exits |")
-        lines.append("| --- | --- | --- | --- |")
-        for f in ran[:_MAX_RUNTIME_ROWS]:
-            tests = [_runtime_test_name(str(t)) for t in _as_list(f.get("tests"))]
-            total = int(f.get("tests_total") or len(tests))
-            named = ", ".join(f"`{t}`" for t in tests[:2])
-            more = f" +{total - 2}" if total > 2 else ""
-            roots = [str(r) for r in _as_list(f.get("entry_roots"))]
-            via = ", ".join(f"`{r}`" for r in roots[:2]) if roots else "tests (direct)"
-            exits = f.get("exits") if isinstance(f.get("exits"), dict) else {}
-            lines.append(
-                f"| `{f.get('name')}` | {total} test(s): {named}{more} | {via} | {_runtime_exits(exits)} |"
-            )
-        if len(ran) > _MAX_RUNTIME_ROWS:
-            lines.append(f"| … +{len(ran) - _MAX_RUNTIME_ROWS} more | | | |")
+        lines.append("**Most exercised changed functions**")
+        for f in ran[:_MAX_RUNTIME_TOP]:
+            n = int(f.get("tests_total") or 0)
+            lines.append(f"- `{f.get('name')}` — {n} test{'s' if n != 1 else ''}")
+        if len(ran) > _MAX_RUNTIME_TOP:
+            lines.append(f"- … {len(ran) - _MAX_RUNTIME_TOP} more executed")
         lines.append("")
-    observed_only = [
-        i for i in _as_list(result.get("accepted_impacts"))
-        if isinstance(i, dict) and i.get("provenance") == "runtime_observed"
-    ]
-    if observed_only:
-        names = ", ".join(f"`{_clean(i.get('label'), limit=80)}`" for i in observed_only[:_MAX_RUNTIME_NAMES])
-        lines.append(
-            f"**Reached only through calls observed at runtime:** {names}. The static call graph "
-            "has no path to these; the existing tests executed one (e.g. registry or dynamic dispatch)."
-        )
-        lines.append("")
+
     if not_ran:
-        names = ", ".join(f"`{f.get('name')}`" for f in not_ran[:_MAX_RUNTIME_NAMES])
-        more = f" +{len(not_ran) - _MAX_RUNTIME_NAMES} more" if len(not_ran) > _MAX_RUNTIME_NAMES else ""
-        lines.append(f"**Not run by any existing test ({len(not_ran)}):** {names}{more}")
+        lines.append("**Not exercised**")
+        for f in not_ran[:_MAX_RUNTIME_NAMES]:
+            lines.append(f"- `{f.get('name')}`")
+        if len(not_ran) > _MAX_RUNTIME_NAMES:
+            lines.append(f"- … {len(not_ran) - _MAX_RUNTIME_NAMES} more")
         lines.append("")
-    gaps = [
-        g for g in _as_list(rt.get("gaps"))
-        if isinstance(g, dict) and ":function_not_executed:" not in str(g.get("id", ""))
+
+    conditions = []
+    for f in ran:
+        for site in _as_list(f.get("changed_sites")):
+            if not isinstance(site, dict):
+                continue
+            for outcome in ("true", "false"):
+                if int(site.get(outcome) or 0) == 0:
+                    conditions.append(
+                        f"- `{_clean(site.get('predicate'), limit=70)}` never {outcome} · "
+                        f"{_short_path(f.get('file'))}:{site.get('line')}"
+                    )
+    if conditions:
+        lines.append("**Changed conditions not exercised both ways**")
+        lines.extend(conditions[:_MAX_RUNTIME_CONDITIONS])
+        if len(conditions) > _MAX_RUNTIME_CONDITIONS:
+            lines.append(f"- … {len(conditions) - _MAX_RUNTIME_CONDITIONS} more")
+        lines.append("")
+
+    mocked = [
+        f"- `{f.get('name')}` → `{str(target).split(':')[-1].split('.')[-1]}`"
+        for f in ran for target in (f.get("stand_ins") or {})
     ]
-    if gaps:
-        lines.append("**Runtime gaps**")
-        for g in gaps[:_MAX_RUNTIME_GAPS]:
-            lines.append(f"- {_clean(g.get('behavior'), limit=220)}")
-        if len(gaps) > _MAX_RUNTIME_GAPS:
-            lines.append(f"- … +{len(gaps) - _MAX_RUNTIME_GAPS} more in the full result")
+    if mocked:
+        lines.append("**Only reached through a mock**")
+        lines.extend(mocked[:_MAX_RUNTIME_CONDITIONS])
         lines.append("")
 
 
