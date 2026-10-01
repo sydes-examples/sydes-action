@@ -253,12 +253,15 @@ jobs:
           sydes --version
 
       # DiffGenome runs `go test` offline inside its sandbox: the toolchain and
-      # the module cache must be in place first.
+      # the module cache must be in place first. A current toolchain, not the
+      # module's minimum `go` line: DiffGenome builds its own instrumenter
+      # (needs Go 1.22+) with the same toolchain, and a newer Go builds older
+      # modules unchanged.
       - name: Set up Go (runtime evidence)
         if: inputs.runtime_evidence_args != '' && hashFiles('go.mod') != ''
         uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version: stable
 
       - name: Download Go modules (runtime evidence)
         if: inputs.runtime_evidence_args != '' && hashFiles('go.mod') != ''
@@ -294,6 +297,7 @@ jobs:
           print(f"diffgenome installer: {(dist.read_text('INSTALLER') or '?').strip()}")
           PY
             echo "diffgenome cli:    $(command -v diffgenome) -> $(diffgenome --version 2>&1)"
+            command -v go >/dev/null && echo "go:                $(go version)"
             if [ -n "$SYDES_GIT_REF" ]; then
               echo "uv.lock entry:"
               grep -A3 '^name = "diffgenome"' "$RUNNER_TEMP/sydes/uv.lock" | grep -E 'version|source' | sed 's/^/  /'
