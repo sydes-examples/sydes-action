@@ -123,10 +123,9 @@ on:
         default: ""
       runner:
         description: >-
-          Runner label. DiffGenome only executes target tests under an OS
-          sandbox it supports (macOS `sandbox-exec` in 0.1.0), so runtime
-          evidence needs a macOS runner (e.g. "macos-15"); on Linux it
-          refuses to run and the comment says so.
+          Runner label. Runtime evidence runs target tests under DiffGenome's
+          OS sandbox: macOS `sandbox-exec`, or (0.1.3+) Linux bubblewrap,
+          which this workflow installs and enables on Linux runners.
         type: string
         default: "ubuntu-24.04"
       runtime_evidence_args:
@@ -265,6 +264,15 @@ jobs:
             python -m pip install --upgrade sydes
           fi
           sydes --version
+
+      # DiffGenome's Linux sandbox is bubblewrap in unprivileged user namespaces; Ubuntu 24.04
+      # restricts those through AppArmor, which the runner's sudo may lift.
+      - name: Enable the Linux sandbox (runtime evidence)
+        if: inputs.runtime_evidence_args != '' && runner.os == 'Linux'
+        run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+          command -v bwrap || sudo apt-get install -y -qq bubblewrap >/dev/null
+          bwrap --version
 
       # DiffGenome runs `go test` offline inside its sandbox: the toolchain and
       # the module cache must be in place first. A current toolchain, not the
