@@ -1860,7 +1860,7 @@ def test_behavioral_section_real_simplebank_result() -> None:
     assert "| Test asserting the changed behavior | 🟡 Not identified |" in md
     rows = [line for line in md.splitlines() if line.startswith("| `transfer_test.go::")]
     assert rows[0].startswith("| `transfer_test.go::TestTransferAPI/InsufficientBalance`")
-    assert all("| No | Yes, isolated (DiffGenome) |" in row for row in rows)
+    assert all("| No | Yes (runtime evidence) |" in row for row in rows)
     assert "Add or run a test covering the affected behavior" not in md
     # the fact is stated once (Test evidence); What is still unknown carries only the action
     assert "none is mapped as asserting" not in md

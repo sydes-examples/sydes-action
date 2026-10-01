@@ -1292,7 +1292,7 @@ def render_test_evidence(result: dict[str, Any], lines: list[str]) -> None:
 
     entries = _named_test_entries(result)
     if entries:
-        lines.append("| Test | Route | Checks the behavior | Run by Sydes |")
+        lines.append("| Test | Route | Checks the behavior | Executed |")
         lines.append("| --- | --- | --- | --- |")
         for label, checks_behavior, route, run_by_sydes in entries[:_MAX_EXISTING_EVIDENCE]:
             lines.append(f"| {label} | {route or '—'} | {checks_behavior} | {run_by_sydes} |")
@@ -1426,7 +1426,7 @@ def _named_test_entries(result: dict[str, Any]) -> list[tuple[str, str, str, str
         file_name = file.rsplit("/", 1)[-1]
         route, run_by_sydes = context_of[key]
         if key in isolated_keys and run_by_sydes == "No":
-            run_by_sydes = "Yes, isolated (DiffGenome)"
+            run_by_sydes = "Yes (runtime evidence)"
         checks_behavior = best_change[key][1] if key in best_change else "No"
         entries.append((f"`{file_name}::{case}`", checks_behavior, route, run_by_sydes))
     seen: set[tuple[str, str]] = set(order_of.keys())
