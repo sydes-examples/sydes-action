@@ -1077,7 +1077,9 @@ def render_runtime_evidence(result: dict[str, Any], rt: dict[str, Any], lines: l
             n = int(f.get("tests_total") or 0)
             roots = [str(r) for r in _as_list(f.get("entry_roots"))][:2]
             via = f" · entered via {', '.join(f'`{r}`' for r in roots)}" if roots else ""
-            lines.append(f"- `{f.get('name')}` — {n} test{'s' if n != 1 else ''}{via}")
+            ran = f"{n} test{'s' if n != 1 else ''}" if n else ""
+            at_import = "ran at import (not by a test)" if f.get("ran_at_import") else ""
+            lines.append(f"- `{f.get('name')}` — {', '.join(x for x in (ran, at_import) if x)}{via}")
         lines.append("")
         lines.append("</details>")
         lines.append("")

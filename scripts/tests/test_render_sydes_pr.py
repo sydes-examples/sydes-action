@@ -1915,3 +1915,12 @@ def test_runtime_evidence_section_real_simplebank_result() -> None:
     assert "- **Reached only through observed calls:** `Dispatcher.dispatch`" in body
     assert "TestUpdateUserAPI/" not in section and "| Changed function |" not in section
     assert "### Behavioral effect" not in body
+
+
+def test_import_time_execution_is_named_not_counted_as_tests() -> None:
+    result = _load("real_runtime_evidence_simplebank.json")
+    fn = result["behavioral"]["runtime_evidence"]["functions"][0]
+    fn.update(executed=True, ran_at_import=True, tests=[], tests_total=0, entry_roots=[])
+    body = r.render(result)
+    assert f"- `{fn['name']}` — ran at import (not by a test)" in body
+    assert f"- `{fn['name']}`\n" not in body.split("**Not exercised**")[-1].split("**")[0]
