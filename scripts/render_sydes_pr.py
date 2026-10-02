@@ -969,15 +969,26 @@ def _short_path(path: Any) -> str:
 def _runtime_selection_line(sel: Any) -> str | None:
     if not isinstance(sel, dict) or sel.get("mode") != "auto":
         return None
-    reasons = [str(r) for r in (sel.get("reasons") or {}).values()]
-    changed = sum(1 for r in reasons if r == "changed in this diff")
-    calling = sum(1 for r in reasons if r.startswith("calls "))
-    other = len(reasons) - changed - calling
-    parts = [f"{changed} changed in this PR"] if changed else []
-    if calling:
-        parts.append(f"{calling} calling changed functions")
-    if other:
-        parts.append(f"{other} importing changed modules")
+    reasons = {str(k): str(v) for k, v in (sel.get("reasons") or {}).items()}
+    tiers = sel.get("tiers") if isinstance(sel.get("tiers"), dict) else {}
+
+    def tier(path: str, reason: str) -> str:
+        if path in tiers:
+            return str(tiers[path])
+        return ("changed" if reason == "changed in this diff" else "direct" if reason.startswith("calls ")
+                else "transitive" if reason.startswith("reaches ") else "imports")
+
+    counts: dict[str, int] = {}
+    for path, reason in reasons.items():
+        t = tier(path, reason)
+        counts[t] = counts.get(t, 0) + 1
+    labels = (
+        ("changed", "changed in this PR"),
+        ("direct", "calling changed functions"),
+        ("transitive", "reaching them through a caller"),
+        ("imports", "importing changed modules"),
+    )
+    parts = [f"{counts[k]} {text}" for k, text in labels if counts.get(k)]
     return f"_Tests selected automatically: {len(reasons)} file(s) ({', '.join(parts)})._"
 
 

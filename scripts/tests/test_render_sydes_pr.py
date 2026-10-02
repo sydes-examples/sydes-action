@@ -1924,3 +1924,15 @@ def test_import_time_execution_is_named_not_counted_as_tests() -> None:
     body = r.render(result)
     assert f"- `{fn['name']}` — ran at import (not by a test)" in body
     assert f"- `{fn['name']}`\n" not in body.split("**Not exercised**")[-1].split("**")[0]
+
+
+def test_selection_line_names_each_tier() -> None:
+    result = _load("real_runtime_evidence_simplebank.json")
+    result["behavioral"]["runtime_evidence"]["test_selection"] = {
+        "mode": "auto",
+        "files": ["a.py", "b.py", "c.py"],
+        "reasons": {"a.py": "changed in this diff", "b.py": "calls f", "c.py": "reaches f via g"},
+        "tiers": {"a.py": "changed", "b.py": "direct", "c.py": "transitive"},
+    }
+    assert ("_Tests selected automatically: 3 file(s) (1 changed in this PR, 1 calling changed "
+            "functions, 1 reaching them through a caller)._") in r.render(result)
