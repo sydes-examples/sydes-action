@@ -25,7 +25,7 @@ the whole result.
 
 Confidence is never flattened away by this consolidation: an established
 fact is a plain bullet; anything inferred or not fully established keeps an
-explicit inline qualifier (e.g. "(likely, not fully established)"), and a
+explicit inline qualifier (e.g. "(possible, not established)"), and a
 pre-existing, unrelated route-level gap keeps "(pre-existing on this
 route)" rather than being merged indistinguishably with a gap in the change
 itself.
@@ -356,7 +356,7 @@ def _describe_group(items: list[dict[str, Any]]) -> str:
     established = [b for b in items if _boundary_status(b) == "proven"]
     likely = [b for b in items if _boundary_status(b) != "proven"]
     if len(items) == 1:
-        qualifier = "established" if established else "likely, not fully established"
+        qualifier = "established" if established else "possible, not established"
         return f"{_boundary_display_label(items[0])} ({qualifier})"
     parts: list[str] = []
     if established:
@@ -682,6 +682,7 @@ def render_what_it_may_affect(result: dict[str, Any], lines: list[str]) -> None:
     lines.append("")
 
     established, likely, established_more, likely_more = select_representative_paths(result)
+    observed = _observed_paths(result)
     # Non-API area rows (Service logic, Background jobs, External
     # integration, Other, Wider API surface) carry genuinely additional
     # information beyond the routes already shown via paths below. The API
@@ -689,7 +690,7 @@ def render_what_it_may_affect(result: dict[str, Any], lines: list[str]) -> None:
     # avoid showing the same route twice under two different bullets.
     other_area_bullets = [f"{area}: {impact}" for area, impact in summarize_system_impact_areas(result) if area != "API"]
 
-    if not established and not likely and not other_area_bullets:
+    if not observed and not established and not likely and not other_area_bullets:
         # Nothing resolved at all -- this must never read as "nothing is
         # affected". Say plainly that tracing did not reach anything, and
         # cite the real reason when one is available.
@@ -702,6 +703,13 @@ def render_what_it_may_affect(result: dict[str, Any], lines: list[str]) -> None:
             lines.append(f"_{reason}_")
         lines.append("")
         return
+
+    if observed:
+        # strongest evidence first: what the existing tests actually executed
+        lines.append("**Observed in existing tests**")
+        lines.append("")
+        _render_path_block(observed, lines)
+        lines.append("")
 
     if established:
         lines.append("**Established**")
@@ -717,12 +725,12 @@ def render_what_it_may_affect(result: dict[str, Any], lines: list[str]) -> None:
         lines.append("")
 
     if likely:
-        lines.append("**Likely, not fully established**")
+        lines.append("**Possible, not established**")
         lines.append("")
         for label in likely:
             lines.append(f"- {label}")
         if likely_more:
-            lines.append(f"_…and {likely_more} more likely impact(s) in the full result._")
+            lines.append(f"_…and {likely_more} more possible impact(s) in the full result._")
         lines.append("")
 
     for bullet in other_area_bullets:
@@ -947,6 +955,147 @@ def _behavior_entry_chains(ev: dict[str, Any], changed: set[str]) -> list[list[s
     return [c for c in chains if not any(o != c and o[: len(c)] == c for o in chains)]
 
 
+_MAX_RUNTIME_PATHS = 3
+_MAX_RUNTIME_TOP = 5
+_MAX_RUNTIME_NAMES = 8
+_MAX_RUNTIME_CONDITIONS = 3
+
+
+def _short_path(path: Any) -> str:
+    parts = str(path or "").split("/")
+    return "/".join(parts[-2:]) if len(parts) > 2 else str(path or "")
+
+
+def _runtime_selection_line(sel: Any) -> str | None:
+    if not isinstance(sel, dict) or sel.get("mode") != "auto":
+        return None
+    reasons = {str(k): str(v) for k, v in (sel.get("reasons") or {}).items()}
+    tiers = sel.get("tiers") if isinstance(sel.get("tiers"), dict) else {}
+
+    def tier(path: str, reason: str) -> str:
+        if path in tiers:
+            return str(tiers[path])
+        return ("changed" if reason == "changed in this diff" else "direct" if reason.startswith("calls ")
+                else "transitive" if reason.startswith("reaches ") else "imports")
+
+    counts: dict[str, int] = {}
+    for path, reason in reasons.items():
+        t = tier(path, reason)
+        counts[t] = counts.get(t, 0) + 1
+    labels = (
+        ("changed", "changed in this PR"),
+        ("direct", "calling changed functions"),
+        ("transitive", "reaching them through a caller"),
+        ("imports", "importing changed modules"),
+    )
+    parts = [f"{counts[k]} {text}" for k, text in labels if counts.get(k)]
+    return f"_Tests selected automatically: {len(reasons)} file(s) ({', '.join(parts)})._"
+
+
+def _observed_paths(result: dict[str, Any]) -> list[list[Any]]:
+    behavior = _behavior_available(result)
+    rt = (behavior or {}).get("runtime_evidence")
+    if not isinstance(rt, dict):
+        return []
+    return [p for p in _as_list(rt.get("paths")) if isinstance(p, list) and p][:_MAX_RUNTIME_PATHS]
+
+
+def _render_path_block(paths: list[list[Any]], lines: list[str]) -> None:
+    """Execution paths as an indented ladder; changed steps marked in an aligned column."""
+    rows = [
+        [
+            (("" if j == 0 else "  → ") + str(step.get("name") if isinstance(step, dict) else step),
+             isinstance(step, dict) and bool(step.get("changed")))
+            for j, step in enumerate(path)
+        ]
+        for path in paths
+    ]
+    width = max(len(text) for row in rows for text, _ in row)
+    lines.append("```text")
+    for i, row in enumerate(rows):
+        if i:
+            lines.append("")
+        for text, changed in row:
+            lines.append(f"{text.ljust(width)}   changed" if changed else text)
+    lines.append("```")
+
+
+def render_runtime_evidence(result: dict[str, Any], rt: dict[str, Any], lines: list[str]) -> None:
+    """`behavioral.runtime_evidence` (DiffGenome `diffgenome-runtime/1`, summarized by Sydes):
+    what the repository's existing tests executed of the change, in a form a developer can
+    scan. Per-test and per-exit detail stays in the result (and a future dashboard)."""
+    functions = [f for f in _as_list(rt.get("functions")) if isinstance(f, dict)]
+    ran = sorted(
+        (f for f in functions if f.get("executed")),
+        key=lambda f: (-int(f.get("tests_total") or 0), str(f.get("name"))),
+    )
+    not_ran = [f for f in functions if not f.get("executed")]
+    exercised = rt.get("tests_exercised")
+    if not isinstance(exercised, int):
+        exercised = len({t for f in functions for t in _as_list(f.get("tests"))})
+
+    lines.append("### Runtime evidence")
+    lines.append("")
+    lines.append(
+        f"{len(ran)} / {len(functions)} changed functions executed · "
+        f"{exercised} existing test(s) exercised the change"
+    )
+    lines.append("")
+    selection = _runtime_selection_line(rt.get("test_selection"))
+    if selection:
+        lines.append(selection)
+        lines.append("")
+
+    if not_ran:
+        lines.append("**Not exercised**")
+        for f in not_ran[:_MAX_RUNTIME_NAMES]:
+            lines.append(f"- `{f.get('name')}`")
+        if len(not_ran) > _MAX_RUNTIME_NAMES:
+            lines.append(f"- … {len(not_ran) - _MAX_RUNTIME_NAMES} more")
+        lines.append("")
+
+    conditions = []
+    for f in ran:
+        for site in _as_list(f.get("changed_sites")):
+            if not isinstance(site, dict):
+                continue
+            for outcome in ("true", "false"):
+                if int(site.get(outcome) or 0) == 0:
+                    conditions.append(
+                        f"- never {outcome}: `{_clean(site.get('predicate'), limit=90)}` · "
+                        f"{_short_path(f.get('file'))}:{site.get('line')}"
+                    )
+    if conditions:
+        lines.append("**Changed branches not exercised**")
+        lines.extend(conditions[:_MAX_RUNTIME_CONDITIONS])
+        if len(conditions) > _MAX_RUNTIME_CONDITIONS:
+            lines.append(f"- … {len(conditions) - _MAX_RUNTIME_CONDITIONS} more")
+        lines.append("")
+
+    mocked = [
+        f"- `{f.get('name')}` → `{str(target).split(':')[-1].split('.')[-1]}`"
+        for f in ran for target in (f.get("stand_ins") or {})
+    ]
+    if mocked:
+        lines.append("**Only reached through a mock**")
+        lines.extend(mocked[:_MAX_RUNTIME_CONDITIONS])
+        lines.append("")
+
+    if ran:
+        lines.append("<details><summary>All runtime mappings</summary>")
+        lines.append("")
+        for f in ran:
+            n = int(f.get("tests_total") or 0)
+            roots = [str(r) for r in _as_list(f.get("entry_roots"))][:2]
+            via = f" · entered via {', '.join(f'`{r}`' for r in roots)}" if roots else ""
+            ran = f"{n} test{'s' if n != 1 else ''}" if n else ""
+            at_import = "ran at import (not by a test)" if f.get("ran_at_import") else ""
+            lines.append(f"- `{f.get('name')}` — {', '.join(x for x in (ran, at_import) if x)}{via}")
+        lines.append("")
+        lines.append("</details>")
+        lines.append("")
+
+
 def render_behavioral_effect(result: dict[str, Any], lines: list[str]) -> None:
     raw = _get(result, "behavioral", default=None)
     if not isinstance(raw, dict):
@@ -960,6 +1109,12 @@ def render_behavioral_effect(result: dict[str, Any], lines: list[str]) -> None:
             "this is not evidence of no impact._"
         )
         lines.append("")
+        return
+    runtime = raw.get("runtime_evidence")
+    if isinstance(runtime, dict) and _as_list(runtime.get("functions")):
+        # The runtime-evidence contract supersedes the older graph view: one section,
+        # stated per changed function, instead of two overlapping ones.
+        render_runtime_evidence(result, runtime, lines)
         return
     ev = raw
     nodes = {str(n.get("id")): n for n in _as_list(ev.get("nodes")) if isinstance(n, dict)}
@@ -1100,40 +1255,41 @@ def render_test_evidence(result: dict[str, Any], lines: list[str]) -> None:
     lines.append("| --- | --- |")
     behavior = _behavior_available(result)
     executing = [str(t) for t in _as_list((behavior or {}).get("tests_on_behavioral_path"))]
+    runtime = (behavior or {}).get("runtime_evidence")
+    exercised = (
+        runtime.get("tests_exercised") if isinstance(runtime, dict) else None
+    )
+    if not isinstance(exercised, int):
+        exercised = len(executing)
+    # Executing the changed code and asserting its behavior are separate claims: one row each.
+    if isinstance(_get(result, "behavioral", default=None), dict):
+        if behavior is None:
+            lines.append("| Existing tests exercise the changed code | ⬛ Unknown (runtime evidence unavailable) |")
+        elif exercised:
+            in_diff = _behavior_tests_in_diff(result)
+            incl = f" (incl. {len(in_diff)} changed in this PR)" if in_diff else ""
+            lines.append(f"| Existing tests exercise the changed code | ✅ {exercised} test(s){incl} |")
+        else:
+            lines.append("| Existing tests exercise the changed code | ❌ None reach it |")
     if has_mapped_test:
-        lines.append("| Relevant regression test | ✅ Found |")
-    elif executing:
-        in_diff = _behavior_tests_in_diff(result)
-        incl = f", incl. {len(in_diff)} changed in this diff" if in_diff else ""
-        lines.append(
-            f"| Relevant regression test | 🟡 {len(executing)} test(s) execute the change{incl}; "
-            "none mapped as asserting it |"
-        )
+        lines.append("| Test asserting the changed behavior | ✅ Found |")
+    elif exercised:
+        lines.append("| Test asserting the changed behavior | 🟡 Not identified |")
     else:
-        lines.append("| Relevant regression test | ❌ Not found |")
+        lines.append("| Test asserting the changed behavior | ❌ Not found |")
     for label, obligation in _category_status_rows(relevant):
         lines.append(f"| {label} | {_short_status_phrase(obligation)} |")
 
     counts = _get(result, "summary", "counts", default={})
     executed = counts.get("tests_executed", 0) or _executed_test_count(result)
     if executed:
-        lines.append(f"| Test executed by Sydes | ✅ Yes — {executed} test(s) run |")
+        lines.append(f"| Tests run by Sydes | ✅ Yes — {executed} test(s) run |")
     else:
         disabled = any(
             "no-run-tests" in str(note) for note in _as_list(_get(result, "notes", default=[]))
         )
         exec_result = "⬛ Not run (`--no-run-tests`)" if disabled else "⬛ Not run"
-        lines.append(f"| Test executed by Sydes | {exec_result} |")
-
-    raw_behavior = _get(result, "behavioral", default=None)
-    if isinstance(raw_behavior, dict):
-        if behavior is not None:
-            if executing:
-                lines.append(f"| Executed in isolation (DiffGenome) | ✅ {len(executing)} test(s) ran the changed code |")
-            else:
-                lines.append("| Executed in isolation (DiffGenome) | ❌ No test reaches the changed code |")
-        else:
-            lines.append("| Executed in isolation (DiffGenome) | ⬛ Unavailable |")
+        lines.append(f"| Tests run by Sydes | {exec_result} |")
 
     # Route-coverage completeness gets its own top-level row -- it's exactly
     # the kind of "how much do I trust this" signal a reviewer wants near
@@ -1149,7 +1305,7 @@ def render_test_evidence(result: dict[str, Any], lines: list[str]) -> None:
 
     entries = _named_test_entries(result)
     if entries:
-        lines.append("| Test | Route | Checks the behavior | Run by Sydes |")
+        lines.append("| Test | Route | Checks the behavior | Executed |")
         lines.append("| --- | --- | --- | --- |")
         for label, checks_behavior, route, run_by_sydes in entries[:_MAX_EXISTING_EVIDENCE]:
             lines.append(f"| {label} | {route or '—'} | {checks_behavior} | {run_by_sydes} |")
@@ -1283,7 +1439,7 @@ def _named_test_entries(result: dict[str, Any]) -> list[tuple[str, str, str, str
         file_name = file.rsplit("/", 1)[-1]
         route, run_by_sydes = context_of[key]
         if key in isolated_keys and run_by_sydes == "No":
-            run_by_sydes = "Yes, isolated (DiffGenome)"
+            run_by_sydes = "Yes (runtime evidence)"
         checks_behavior = best_change[key][1] if key in best_change else "No"
         entries.append((f"`{file_name}::{case}`", checks_behavior, route, run_by_sydes))
     seen: set[tuple[str, str]] = set(order_of.keys())
@@ -1505,16 +1661,9 @@ def render_what_is_still_unknown(result: dict[str, Any], lines: list[str]) -> No
     before_merge_bullets: list[str] = []
     if wider_areas:
         before_merge_bullets.append("Verify the changed behavior on the wider API surface before merging.")
-    executing_tests = [
-        str(t) for t in _as_list((_behavior_available(result) or {}).get("tests_on_behavioral_path"))
-    ]
-    if verifying_tests == 0 and has_any_impact and executing_tests:
-        before_merge_bullets.append(
-            f"{len(executing_tests)} existing test(s) execute the changed code, but none is mapped as "
-            "asserting the new behavior; confirm one asserts it before merging."
-        )
-    elif verifying_tests == 0 and has_any_impact:
-        before_merge_bullets.append("Add or run a test covering the affected behavior before merging.")
+    if verifying_tests == 0 and has_any_impact:
+        # the action only: what existing tests execute vs assert is already in Test evidence
+        before_merge_bullets.append("Add or identify a test that asserts the changed behavior.")
 
     coverage_bullets = list(_route_prefix_notes(result))
     mutation_bullets = _mutation_gap_bullets(result)
@@ -1747,7 +1896,23 @@ def render_details(result: dict[str, Any], lines: list[str]) -> None:
     lines.append("")
     lines.append(f"- {line}")
     behavior = _behavior_available(result)
-    if behavior is not None:
+    runtime = behavior.get("runtime_evidence") if behavior is not None else None
+    if isinstance(runtime, dict) and _as_list(runtime.get("functions")):
+        observed_only = [
+            str(i.get("label")) for i in _as_list(result.get("accepted_impacts"))
+            if isinstance(i, dict) and i.get("provenance") == "runtime_observed"
+        ]
+        if observed_only:
+            lines.append(
+                "- **Reached only through observed calls:** "
+                + ", ".join(f"`{_clean(n, limit=60)}`" for n in observed_only[:_MAX_RUNTIME_NAMES])
+            )
+        lines.append(
+            f"- **Runtime evidence:** DiffGenome `{runtime.get('format')}` · "
+            f"{len(_as_list(runtime.get('gaps')))} runtime gap(s) · not reported: "
+            + "; ".join(_clean(x, limit=80) for x in _as_list(runtime.get("not_reported")))
+        )
+    elif behavior is not None:
         counts = behavior.get("counts") if isinstance(behavior.get("counts"), dict) else {}
         reconstructed = sum(
             int(counts.get(k, 0) or 0)

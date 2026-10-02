@@ -117,7 +117,7 @@ def test_established_only_shows_no_likely_section():
         accepted_impacts=[{"id": "flow:a", "status": "proven"}],
     )
     out = r.render(result)
-    assert "(likely, not fully established)" not in out
+    assert "(possible, not established)" not in out
     assert "PetService.create" in out
 
 
@@ -133,9 +133,9 @@ def test_established_and_inferred_both_shown_and_distinct():
     # The two kinds of evidence must never be visually merged into one
     # list -- each gets its own bold sub-label, Established first.
     assert "**Established**" in section
-    assert "**Likely, not fully established**" in section
+    assert "**Possible, not established**" in section
     established_idx = section.index("**Established**")
-    likely_idx = section.index("**Likely, not fully established**")
+    likely_idx = section.index("**Possible, not established**")
     assert established_idx < likely_idx
 
 
@@ -156,7 +156,7 @@ def test_not_fully_traced_is_explicit_not_silent():
     # No bare (established) bullet -- every backtick-wrapped bullet here
     # must carry the inline "(likely, ...)" qualifier.
     assert re.search(r"^- `[^`]+`$", section, re.MULTILINE) is None
-    assert "(likely, not fully established)" in section
+    assert "(possible, not established)" in section
     assert "email verification task processing" in section
 
 
@@ -190,7 +190,7 @@ def test_many_likely_paths_are_truncated_deterministically():
     out = r.render(result)
     shown = out.count("maybe affects service")
     assert shown == r._MAX_LIKELY_PATHS
-    assert f"…and {5 - r._MAX_LIKELY_PATHS} more likely impact(s)" in out
+    assert f"…and {5 - r._MAX_LIKELY_PATHS} more possible impact(s)" in out
 
 
 # ---------------------------------------------------------------------------
@@ -243,10 +243,10 @@ def test_supporting_evidence_is_shown_instead_of_none_identified():
     )
     out = r.render(result)
     section = out.split("### Test evidence")[1].split("###")[0]
-    assert "| Relevant regression test | ❌ Not found |" in section
+    assert "| Test asserting the changed behavior | ❌ Not found |" in section
     # Real evidence exists somewhere, but none of it verifies the changed
     # behavior directly -- the before-merge nudge should still fire.
-    assert "- Add or run a test covering the affected behavior before merging." in out
+    assert "- Add or identify a test that asserts the changed behavior." in out
 
 
 # ---------------------------------------------------------------------------
@@ -424,7 +424,7 @@ def test_verifying_tests_shown_as_the_primary_count():
     out = r.render(result)
     # Real verifying evidence found (via summary.counts) -- the before-merge
     # nudge, which reads that same aggregate directly, must not fire.
-    assert "- Add or run a test covering the affected behavior before merging." not in out
+    assert "- Add or identify a test that asserts the changed behavior." not in out
 
 
 # ---------------------------------------------------------------------------
@@ -436,11 +436,11 @@ def test_tests_identified_not_executed_reads_as_intentional():
     result = _load("real_established_many_tests.json")
     out = r.render(result)
     section = out.split("### Test evidence")[1].split("###")[0]
-    assert "| Relevant regression test | ✅ Found |" in section
+    assert "| Test asserting the changed behavior | ✅ Found |" in section
     # Execution is explicit and distinct from the verification categories --
     # this workflow's --no-run-tests must read as a deliberate config
     # choice, not a failure.
-    assert "| Test executed by Sydes | ⬛ Not run (`--no-run-tests`) |" in section
+    assert "| Tests run by Sydes | ⬛ Not run (`--no-run-tests`) |" in section
     assert "fail" not in section.lower()
     assert "error" not in section.lower()
 
@@ -700,7 +700,7 @@ def test_wider_api_surface_shown_for_boundary_beyond_traced_route():
     out = r.render(result)
     assert (
         "- Wider API surface: JWT authentication filter validates tokens including grace "
-        "period logic (likely, not fully established)"
+        "period logic (possible, not established)"
     ) in out
     assert "Verify the changed behavior on the wider API surface before merging." in out
 
@@ -817,7 +817,7 @@ def test_before_merge_recommends_a_test_when_none_identified_and_impact_found():
         accepted_impacts=[{"id": "flow:a", "status": "proven"}],
     )
     out = r.render(result)
-    assert "- Add or run a test covering the affected behavior before merging." in out
+    assert "- Add or identify a test that asserts the changed behavior." in out
 
 
 # ---------------------------------------------------------------------------
@@ -1097,7 +1097,7 @@ def test_zero_mapped_tests_never_renders_a_positive_aggregate_count():
         },
     )
     out = r.render(result)
-    assert "| Test executed by Sydes | ⬛ Not run |" in out
+    assert "| Tests run by Sydes | ⬛ Not run |" in out
     assert "Yes —" not in out
 
 
@@ -1324,7 +1324,7 @@ def test_flow_without_matching_impact_falls_back_to_its_own_status_not_proven():
     out = r.render(result)
     section = out.split("### What it may affect")[1].split("###")[0]
     assert "**Established**" not in section
-    assert "**Likely, not fully established**" in section
+    assert "**Possible, not established**" in section
     assert "PetController.create" in section
 
 
@@ -1348,7 +1348,7 @@ def test_flow_without_matching_impact_defaults_proven_only_when_flow_itself_says
     out = r.render(result)
     section = out.split("### What it may affect")[1].split("###")[0]
     assert "**Established**" in section
-    assert "**Likely, not fully established**" not in section
+    assert "**Possible, not established**" not in section
 
 
 # ---------------------------------------------------------------------------
@@ -1397,7 +1397,7 @@ def test_execution_section_states_explicitly_whether_sydes_ran_tests():
     result = _base_result(notes=["test_execution=skipped reason=--no-run-tests"])
     out = r.render(result)
     section = out.split("### Test evidence")[1].split("###")[0]
-    assert "| Test executed by Sydes | ⬛ Not run (`--no-run-tests`) |" in section
+    assert "| Tests run by Sydes | ⬛ Not run (`--no-run-tests`) |" in section
 
 
 def test_execution_section_reports_a_real_run_count():
@@ -1405,7 +1405,7 @@ def test_execution_section_reports_a_real_run_count():
         "verdict": "VERIFIED", "risk": "LOW", "counts": {"mapped_tests": 0, "tests_executed": 5},
     })
     out = r.render(result)
-    assert "| Test executed by Sydes | ✅ Yes — 5 test(s) run |" in out
+    assert "| Tests run by Sydes | ✅ Yes — 5 test(s) run |" in out
 
 
 def test_still_unverified_distinguishes_no_test_found_from_test_not_executed():
@@ -1717,7 +1717,7 @@ def test_change_analysis_shows_handoff_icon_when_test_found_but_not_executed():
     )
     out = r.render(result)
     section = out.split("### Test evidence")[1].split("###")[0]
-    assert "| Relevant regression test | ✅ Found |" in section
+    assert "| Test asserting the changed behavior | ✅ Found |" in section
     assert "| Validation behavior | 🟡 Found, not executed |" in section
 
 
@@ -1725,7 +1725,7 @@ def test_change_analysis_all_red_when_nothing_is_established():
     result = _base_result()
     out = r.render(result)
     section = out.split("### Test evidence")[1].split("###")[0]
-    assert "| Relevant regression test | ❌ Not found |" in section
+    assert "| Test asserting the changed behavior | ❌ Not found |" in section
     assert "✅" not in section
 
 
@@ -1809,7 +1809,7 @@ def test_executed_test_count_falls_back_to_obligation_executions():
         {"test_id": "PetService.test.ts::rejects", "status": "passed"}
     ]
     out = r.render(result)
-    assert "| Test executed by Sydes | ✅ Yes — 1 test(s) run |" in out
+    assert "| Tests run by Sydes | ✅ Yes — 1 test(s) run |" in out
 
 
 def test_change_analysis_falls_back_to_status_when_mapped_tests_is_trimmed_from_the_result():
@@ -1830,7 +1830,7 @@ def test_change_analysis_falls_back_to_status_when_mapped_tests_is_trimmed_from_
     )
     out = r.render(result)
     section = out.split("### Test evidence")[1].split("###")[0]
-    assert "| Relevant regression test | ✅ Found |" in section
+    assert "| Test asserting the changed behavior | ✅ Found |" in section
     assert "| Validation behavior | 🟡 Found, not executed |" in section
 
 
@@ -1855,13 +1855,16 @@ def test_behavioral_section_real_simplebank_result() -> None:
     assert "Executing is not asserting" in section
     assert section.count("errorResponse") == 1  # deduplicated across changed symbols
     assert "%" not in section and "confidence" not in section.lower()
-    assert "| Relevant regression test | 🟡 11 test(s) execute the change, incl. 1 changed in this diff; none mapped as asserting it |" in md
-    assert "| Executed in isolation (DiffGenome) | ✅ 11 test(s) ran the changed code |" in md
+    # executing the change and asserting it are separate claims
+    assert "| Existing tests exercise the changed code | ✅ 11 test(s) (incl. 1 changed in this PR) |" in md
+    assert "| Test asserting the changed behavior | 🟡 Not identified |" in md
     rows = [line for line in md.splitlines() if line.startswith("| `transfer_test.go::")]
     assert rows[0].startswith("| `transfer_test.go::TestTransferAPI/InsufficientBalance`")
-    assert all("| No | Yes, isolated (DiffGenome) |" in row for row in rows)
+    assert all("| No | Yes (runtime evidence) |" in row for row in rows)
     assert "Add or run a test covering the affected behavior" not in md
-    assert "none is mapped as asserting the new behavior" in md
+    # the fact is stated once (Test evidence); What is still unknown carries only the action
+    assert "none is mapped as asserting" not in md
+    assert "- Add or identify a test that asserts the changed behavior." in md
     assert "**Behavioral evidence:** DiffGenome `diffgenome-change/1`" in md
     assert r.render(_load("real_behavioral_diffgenome.json")) == md  # deterministic
 
@@ -1875,9 +1878,9 @@ def test_behavioral_unavailable_is_said_never_no_impact() -> None:
     md = r.render(result)
     assert "_Executed evidence unavailable: DiffGenome exited 2: no executions captured." in md
     assert "this is not evidence of no impact" in md
-    assert "| Executed in isolation (DiffGenome) | ⬛ Unavailable |" in md
-    assert "| Relevant regression test | ❌ Not found |" in md
-    assert "Add or run a test covering the affected behavior before merging." in md
+    assert "| Existing tests exercise the changed code | ⬛ Unknown (runtime evidence unavailable) |" in md
+    assert "| Test asserting the changed behavior | ❌ Not found |" in md
+    assert "Add or identify a test that asserts the changed behavior." in md
 
 
 def test_behavioral_absent_renders_exactly_as_before() -> None:
@@ -1888,3 +1891,48 @@ def test_behavioral_absent_renders_exactly_as_before() -> None:
             obligation["supporting_tests"] = []
     md = r.render(result)
     assert "Behavioral" not in md and "DiffGenome" not in md
+
+
+def test_runtime_evidence_section_real_simplebank_result() -> None:
+    """A real runtime-evidence result (simplebank #103, PyPI DiffGenome), plus a synthetic
+    runtime-only impact and test-selection record. Evidence hierarchy: observed paths lead
+    "What it may affect"; the runtime section leads with what did not execute."""
+    body = r.render(_load("real_runtime_evidence_simplebank.json"))
+    affect = body.split("### What it may affect", 1)[1].split("### Runtime evidence", 1)[0]
+    assert affect.index("**Observed in existing tests**") < affect.index("**Established**")
+    assert "Server.UpdateUser" in affect and "  → Server.authorizeUser" in affect
+    assert affect.count("   changed") >= 3
+    section = body.split("### Runtime evidence", 1)[1].split("### Test evidence", 1)[0]
+    assert "5 / 12 changed functions executed · 7 existing test(s) exercised the change" in section
+    assert "_Tests selected automatically: 1 file(s) (1 changed in this PR)._" in section
+    assert section.index("**Not exercised**") < section.index("**Changed branches not exercised**")
+    assert "- never true: `!hasPermission(payload.Role, accessibleRoles)` · gapi/authorization.go:45" in section
+    assert "**Only reached through a mock**\n- `Server.UpdateUser` → `UpdateUser`" in section
+    mappings = section.split("<summary>All runtime mappings</summary>", 1)[1]
+    assert "- `Server.UpdateUser` — 7 tests" in mappings
+    # how something was found is metadata, not the story
+    assert "static call graph" not in body
+    assert "- **Reached only through observed calls:** `Dispatcher.dispatch`" in body
+    assert "TestUpdateUserAPI/" not in section and "| Changed function |" not in section
+    assert "### Behavioral effect" not in body
+
+
+def test_import_time_execution_is_named_not_counted_as_tests() -> None:
+    result = _load("real_runtime_evidence_simplebank.json")
+    fn = result["behavioral"]["runtime_evidence"]["functions"][0]
+    fn.update(executed=True, ran_at_import=True, tests=[], tests_total=0, entry_roots=[])
+    body = r.render(result)
+    assert f"- `{fn['name']}` — ran at import (not by a test)" in body
+    assert f"- `{fn['name']}`\n" not in body.split("**Not exercised**")[-1].split("**")[0]
+
+
+def test_selection_line_names_each_tier() -> None:
+    result = _load("real_runtime_evidence_simplebank.json")
+    result["behavioral"]["runtime_evidence"]["test_selection"] = {
+        "mode": "auto",
+        "files": ["a.py", "b.py", "c.py"],
+        "reasons": {"a.py": "changed in this diff", "b.py": "calls f", "c.py": "reaches f via g"},
+        "tiers": {"a.py": "changed", "b.py": "direct", "c.py": "transitive"},
+    }
+    assert ("_Tests selected automatically: 3 file(s) (1 changed in this PR, 1 calling changed "
+            "functions, 1 reaching them through a caller)._") in r.render(result)
