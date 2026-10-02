@@ -1041,6 +1041,12 @@ def render_runtime_evidence(result: dict[str, Any], rt: dict[str, Any], lines: l
         f"{exercised} test(s) exercised the change"
     )
     lines.append("")
+    if rt.get("stopped_early"):
+        lines.append(
+            f"⚠️ The test run was {_clean(rt.get('stopped_early'), limit=120)}: results are "
+            "partial, and _not run_ may only mean _not reached before the stop_."
+        )
+        lines.append("")
     selection = _runtime_selection_line(rt.get("test_selection"))
     if selection:
         lines.append(selection)
