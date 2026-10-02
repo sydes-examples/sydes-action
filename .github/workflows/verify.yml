@@ -338,6 +338,9 @@ jobs:
           print(f"diffgenome:        {dist.version} (import: {pathlib.Path(diffgenome.__file__).parent})")
           print(f"diffgenome source: {json.loads(direct)['url'] if direct else 'package index (no direct/local URL)'}")
           print(f"diffgenome installer: {(dist.read_text('INSTALLER') or '?').strip()}")
+          from diffgenome.sandbox import select_backend
+          backend, why = select_backend()
+          print(f"sandbox backend:   {backend.name if backend else 'none: ' + why}")
           PY
             echo "diffgenome cli:    $(command -v diffgenome) -> $(diffgenome --version 2>&1)"
             command -v go >/dev/null && echo "go:                $(go version)"
