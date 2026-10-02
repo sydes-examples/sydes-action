@@ -1047,6 +1047,13 @@ def render_runtime_evidence(result: dict[str, Any], rt: dict[str, Any], lines: l
             "partial, and _not run_ may only mean _not reached before the stop_."
         )
         lines.append("")
+    subprocesses = rt.get("untraced_python_subprocesses")
+    if isinstance(subprocesses, int) and subprocesses > 0:
+        lines.append(
+            f"⚠️ The selected tests started {subprocesses} Python subprocess(es), which runtime "
+            "evidence does not observe: changed code may run there even when listed as _not run_."
+        )
+        lines.append("")
     selection = _runtime_selection_line(rt.get("test_selection"))
     if selection:
         lines.append(selection)

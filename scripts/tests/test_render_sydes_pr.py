@@ -1948,3 +1948,13 @@ def test_runtime_evidence_says_when_the_run_stopped_early() -> None:
     text = "\n".join(lines)
     assert "⚠️ The test run was stopped by the sandbox CPU-time limit (600 s of CPU time)" in text
     assert text.index("⚠️") < text.index("**Not run by the selected tests**")
+
+
+def test_runtime_evidence_flags_untraced_subprocesses() -> None:
+    """glances #3770 (field study rerun): the server under test runs in a child process."""
+    rt = {"functions": [{"name": "a", "executed": False}], "untraced_python_subprocesses": 2}
+    lines: list[str] = []
+    r.render_runtime_evidence({}, rt, lines)
+    text = "\n".join(lines)
+    assert "⚠️ The selected tests started 2 Python subprocess(es)" in text
+    assert text.index("⚠️") < text.index("**Not run by the selected tests**")
