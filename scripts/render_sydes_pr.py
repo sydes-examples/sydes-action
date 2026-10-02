@@ -1037,8 +1037,8 @@ def render_runtime_evidence(result: dict[str, Any], rt: dict[str, Any], lines: l
     lines.append("### Runtime evidence")
     lines.append("")
     lines.append(
-        f"{len(ran)} / {len(functions)} changed functions executed · "
-        f"{exercised} existing test(s) exercised the change"
+        f"{len(ran)} / {len(functions)} changed functions executed by the selected tests · "
+        f"{exercised} test(s) exercised the change"
     )
     lines.append("")
     selection = _runtime_selection_line(rt.get("test_selection"))
@@ -1047,7 +1047,7 @@ def render_runtime_evidence(result: dict[str, Any], rt: dict[str, Any], lines: l
         lines.append("")
 
     if not_ran:
-        lines.append("**Not exercised**")
+        lines.append("**Not run by the selected tests** _(other tests in the suite may run them)_")
         for f in not_ran[:_MAX_RUNTIME_NAMES]:
             lines.append(f"- `{f.get('name')}`")
         if len(not_ran) > _MAX_RUNTIME_NAMES:
@@ -1066,7 +1066,7 @@ def render_runtime_evidence(result: dict[str, Any], rt: dict[str, Any], lines: l
                         f"{_short_path(f.get('file'))}:{site.get('line')}"
                     )
     if conditions:
-        lines.append("**Changed branches not exercised**")
+        lines.append("**Changed branch outcomes not observed in the selected tests**")
         lines.extend(conditions[:_MAX_RUNTIME_CONDITIONS])
         if len(conditions) > _MAX_RUNTIME_CONDITIONS:
             lines.append(f"- … {len(conditions) - _MAX_RUNTIME_CONDITIONS} more")

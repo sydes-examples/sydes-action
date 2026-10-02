@@ -1903,9 +1903,9 @@ def test_runtime_evidence_section_real_simplebank_result() -> None:
     assert "Server.UpdateUser" in affect and "  → Server.authorizeUser" in affect
     assert affect.count("   changed") >= 3
     section = body.split("### Runtime evidence", 1)[1].split("### Test evidence", 1)[0]
-    assert "5 / 12 changed functions executed · 7 existing test(s) exercised the change" in section
+    assert "5 / 12 changed functions executed by the selected tests · 7 test(s) exercised the change" in section
     assert "_Tests selected automatically: 1 file(s) (1 changed in this PR)._" in section
-    assert section.index("**Not exercised**") < section.index("**Changed branches not exercised**")
+    assert section.index("**Not run by the selected tests**") < section.index("**Changed branch outcomes not observed in the selected tests**")
     assert "- never true: `!hasPermission(payload.Role, accessibleRoles)` · gapi/authorization.go:45" in section
     assert "**Only reached through a mock**\n- `Server.UpdateUser` → `UpdateUser`" in section
     mappings = section.split("<summary>All runtime mappings</summary>", 1)[1]
@@ -1923,7 +1923,7 @@ def test_import_time_execution_is_named_not_counted_as_tests() -> None:
     fn.update(executed=True, ran_at_import=True, tests=[], tests_total=0, entry_roots=[])
     body = r.render(result)
     assert f"- `{fn['name']}` — ran at import (not by a test)" in body
-    assert f"- `{fn['name']}`\n" not in body.split("**Not exercised**")[-1].split("**")[0]
+    assert f"- `{fn['name']}`\n" not in body.split("**Not run by the selected tests**")[-1].split("**")[0]
 
 
 def test_selection_line_names_each_tier() -> None:
