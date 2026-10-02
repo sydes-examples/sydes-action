@@ -1958,3 +1958,16 @@ def test_runtime_evidence_flags_untraced_subprocesses() -> None:
     text = "\n".join(lines)
     assert "⚠️ The selected tests started 2 Python subprocess(es)" in text
     assert text.index("⚠️") < text.index("**Not run by the selected tests**")
+
+
+def test_none_reach_it_is_qualified_when_subprocesses_were_not_observed() -> None:
+    """glances #3770 (field study rerun): the test-evidence table said "None reach it" while
+    the server subprocess the tests start runs the changed code."""
+    rt = {"functions": [{"name": "GlancesRestfulApi._router", "executed": False}],
+          "tests_exercised": 0, "untraced_python_subprocesses": 2}
+    result = {"behavioral": {"status": "available", "runtime_evidence": rt}}
+    body = r.render(result)
+    assert "None reach it" not in body
+    assert "🟡 None observed: the tests started 2 Python subprocess(es), which are not observed" in body
+    rt["untraced_python_subprocesses"] = 0
+    assert "❌ None of the selected tests reach it" in r.render(result)

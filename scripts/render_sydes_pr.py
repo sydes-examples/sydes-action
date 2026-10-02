@@ -1283,7 +1283,23 @@ def render_test_evidence(result: dict[str, Any], lines: list[str]) -> None:
             incl = f" (incl. {len(in_diff)} changed in this PR)" if in_diff else ""
             lines.append(f"| Existing tests exercise the changed code | ✅ {exercised} test(s){incl} |")
         else:
-            lines.append("| Existing tests exercise the changed code | ❌ None reach it |")
+            rt = runtime if isinstance(runtime, dict) else {}
+            subprocesses = rt.get("untraced_python_subprocesses")
+            if isinstance(subprocesses, int) and subprocesses > 0:
+                # glances #3770: the server under test runs in a child process the tests start
+                lines.append(
+                    "| Existing tests exercise the changed code | 🟡 None observed: the tests "
+                    f"started {subprocesses} Python subprocess(es), which are not observed |"
+                )
+            elif rt.get("stopped_early"):
+                lines.append(
+                    "| Existing tests exercise the changed code | 🟡 None before the run "
+                    "stopped early |"
+                )
+            else:
+                lines.append(
+                    "| Existing tests exercise the changed code | ❌ None of the selected tests reach it |"
+                )
     if has_mapped_test:
         lines.append("| Test asserting the changed behavior | ✅ Found |")
     elif exercised:
