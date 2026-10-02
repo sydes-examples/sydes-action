@@ -3,14 +3,14 @@ name: Sydes verify (reusable)
 # Central, versionable implementation of the Sydes PR-verification integration.
 # Individual example repositories call this instead of each carrying their own
 # copy of the workflow steps and renderer script. See ../../CONTRACT.md in
-# this repository for the frozen v1 artifact/presentation contract this
-# workflow implements.
+# this repository for the artifact/presentation contract this workflow
+# implements (v1 contract plus the additive v2 runtime-evidence section).
 #
 # Called from a repository's own `pull_request`-triggered workflow, e.g.:
 #
 #   jobs:
 #     sydes:
-#       uses: sydes-examples/sydes-action/.github/workflows/verify.yml@v1
+#       uses: sydes-examples/sydes-action/.github/workflows/verify.yml@v2
 #       with:
 #         repo_alias: app
 #       secrets:
@@ -24,14 +24,14 @@ name: Sydes verify (reusable)
 # introspect the ref it was itself invoked at (no `github.*` context exposes
 # this), so `renderer_ref`'s default below cannot be computed at run time --
 # it is a literal string, kept in sync with this file's own release tag by
-# hand. Concretely: this file's `renderer_ref` default is "v1" because this
-# exact commit IS what the `v1` tag points at. Cutting a future `v2` means
-# bumping this default to "v2" in that same release commit, before moving
-# the tag -- otherwise a consumer pinning `@v2` would still silently pull
-# the `v1` renderer (or whatever "main" drifted to, if this were ever
-# pointed back at "main"). This is what keeps `uses: .../verify.yml@v1`
-# meaning "the whole v1 integration, workflow AND renderer" rather than
-# "the v1 workflow, with a renderer that can drift out from under it".
+# hand. Concretely: this file's `renderer_ref` default is "v2" because this
+# exact commit IS what the `v2` tag points at (`v1` keeps its own commit, with
+# "v1"). Cutting a future `v3` means bumping this default to "v3" in that same
+# release commit, before moving the tag -- otherwise a consumer pinning `@v3`
+# would still silently pull the `v2` renderer (or whatever "main" drifted to, if this were ever
+# pointed back at "main"). This is what keeps `uses: .../verify.yml@v2`
+# meaning "the whole v2 integration, workflow AND renderer" rather than
+# "the v2 workflow, with a renderer that can drift out from under it".
 
 on:
   workflow_call:
@@ -65,7 +65,7 @@ on:
           `sydes_ref` documents above (e.g. testing an unreleased renderer
           change); most callers should never set this.
         type: string
-        default: "v1"
+        default: "v2"
       recovery_route_context:
         description: >-
           Pass `--recovery-route-context` to `sydes verify-change` (see

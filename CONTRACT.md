@@ -51,7 +51,7 @@ One artifact named `sydes-result`, containing exactly:
 `sydes-result.json` still carries `diagnostics` itself. True schema
 separation (if ever done) belongs in Sydes, not in this rendering layer.
 
-## Behavioral effect (optional, additive)
+## Behavioral effect / Runtime evidence (optional, additive)
 
 When the result carries `behavioral` (Sydes `--behavioral-map diffgenome`), the
 comment gains a `### Behavioral effect` section after "What it may affect" and
@@ -61,6 +61,11 @@ observed executing the changed code are listed as run in isolation and never as
 section states the reason and that it is not evidence of no impact. A result
 without the field renders exactly as before. This is additive: no existing
 section, row or wording changes for results that do not carry it.
+
+In v2, when `behavioral` carries DiffGenome's runtime section (`diffgenome-runtime/1`, from
+`runtime_evidence: auto` or `runtime_evidence_args`), the section is `### Runtime evidence`
+instead: changed functions executed, the tests that ran them, how the tests were selected,
+paths, and conditions never observed. Also additive; results without it render as in v1.
 
 ## Permissions
 
