@@ -128,6 +128,16 @@ on:
           which this workflow installs and enables on Linux runners.
         type: string
         default: "ubuntu-24.04"
+      runtime_evidence:
+        description: >-
+          "auto": Python runtime evidence with no per-repository configuration.
+          Sydes prepares the test environment from the project's declared
+          dependencies (sydes runtime-detect --prepare), detects source/test
+          roots and the interpreter, and selects the tests from the change.
+          Hard cases go in .sydes.yml (runtime: ...). Empty (default): off,
+          unless runtime_evidence_args is set.
+        type: string
+        default: ""
       runtime_evidence_args:
         description: >-
           DiffGenome runtime configuration (forwarded to `diffgenome change`
@@ -268,7 +278,7 @@ jobs:
       # DiffGenome's Linux sandbox is bubblewrap in unprivileged user namespaces; Ubuntu 24.04
       # restricts those through AppArmor, which the runner's sudo may lift.
       - name: Enable the Linux sandbox (runtime evidence)
-        if: inputs.runtime_evidence_args != '' && runner.os == 'Linux'
+        if: (inputs.runtime_evidence_args != '' || inputs.runtime_evidence == 'auto') && runner.os == 'Linux'
         run: |
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
           command -v bwrap || sudo apt-get install -y -qq bubblewrap >/dev/null
@@ -292,6 +302,17 @@ jobs:
       - name: Prepare test environment (runtime evidence)
         if: inputs.runtime_evidence_args != '' && inputs.runtime_setup != ''
         run: ${{ inputs.runtime_setup }}
+
+      # Zero config: the test environment is prepared explicitly from what the project
+      # declares, outside the analyzed tree; the dry run shows what was detected.
+      - name: Prepare Python test environment (runtime evidence auto)
+        if: inputs.runtime_evidence == 'auto'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          sydes runtime-detect --base "$BASE_SHA" --prepare "$RUNNER_TEMP/target-venv" | tee runtime-detect.txt
+          { echo "### Runtime evidence: detected environment"; echo '```text'; cat runtime-detect.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          echo "VIRTUAL_ENV=$RUNNER_TEMP/target-venv" >> "$GITHUB_ENV"
 
       # What actually ran: recorded in the job summary and the uploaded artifact,
       # so a reviewer can tell the published DiffGenome package was used.
@@ -355,6 +376,9 @@ jobs:
           fi
           if [ "${{ inputs.mutation_verify }}" = "true" ]; then
             EXTRA_FLAGS+=(--mutation-verify)
+          fi
+          if [ "${{ inputs.runtime_evidence }}" = "auto" ] && [ -z "$RUNTIME_EVIDENCE_ARGS" ]; then
+            EXTRA_FLAGS+=(--behavioral-map diffgenome --behavioral-out "$RUNNER_TEMP/diffgenome" --runtime-evidence auto)
           fi
           if [ -n "$RUNTIME_EVIDENCE_ARGS" ]; then
             EXTRA_FLAGS+=(--behavioral-map diffgenome --behavioral-args "$RUNTIME_EVIDENCE_ARGS"
@@ -463,5 +487,6 @@ jobs:
             sydes-comment.md
             sydes-diagnostics.json
             sydes-provenance.md
+            runtime-detect.txt
             ${{ runner.temp }}/diffgenome/diffgenome-change.json
           if-no-files-found: warn
